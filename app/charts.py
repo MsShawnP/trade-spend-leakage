@@ -1,17 +1,28 @@
-"""Plotly chart builders — Lailara Design System v2 styling."""
+"""Plotly chart builders and table components — Lailara Design System v2 styling."""
 
 from __future__ import annotations
 
 import pandas as pd
 import plotly.graph_objects as go
+from dash import html
 
 from app.constants import (
     CANVAS,
     CATEGORICAL,
     FONT_SANS,
+    FONT_SERIF,
     GRIDLINE,
     INK,
+    NAVY,
+    RED,
+    TEXT_PRIMARY,
     TEXT_SECONDARY,
+    TOKYO_DEFAULT,
+    SG_DEFAULT,
+    PASS_BG,
+    PASS_TEXT,
+    WARN_BG,
+    WARN_TEXT,
 )
 
 
@@ -91,3 +102,172 @@ def bump_chart(df: pd.DataFrame, pinned: str | None = None) -> go.Figure:
     )
 
     return fig
+
+
+# ---------------------------------------------------------------------------
+# Leakage ledger — summary table (4 rows + total)
+# ---------------------------------------------------------------------------
+
+_CLASSIFICATION_STYLE = {
+    "Recoverable":  {"background": PASS_BG,  "color": PASS_TEXT},
+    "Reallocatable": {"background": WARN_BG, "color": WARN_TEXT},
+}
+
+_LEDGER_HEADER_STYLE = {
+    "fontFamily": FONT_SANS,
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": TEXT_SECONDARY,
+    "textTransform": "uppercase",
+    "letterSpacing": "0.06em",
+    "padding": "8px 12px",
+    "borderBottom": f"2px solid {INK}",
+    "textAlign": "left",
+    "whiteSpace": "nowrap",
+}
+
+_LEDGER_CELL_STYLE = {
+    "fontFamily": FONT_SANS,
+    "fontSize": "14px",
+    "color": TEXT_PRIMARY,
+    "padding": "10px 12px",
+    "borderBottom": "1px solid #e8e6e1",
+    "verticalAlign": "middle",
+}
+
+
+def leakage_ledger(df: pd.DataFrame, pinned: str | None = None) -> html.Div:
+    """Styled summary ledger for the four leakage sub-types.
+
+    Each data row is clickable — it carries an id for pattern-matching callbacks.
+    Click-to-pin: selected row highlights; clicking again dismisses.
+    """
+    header = html.Tr([
+        html.Th("Leakage type",   style=_LEDGER_HEADER_STYLE),
+        html.Th("$ Total",        style={**_LEDGER_HEADER_STYLE, "textAlign": "right"}),
+        html.Th("Instances",      style={**_LEDGER_HEADER_STYLE, "textAlign": "right"}),
+        html.Th("Classification", style=_LEDGER_HEADER_STYLE),
+    ])
+
+    data_rows = []
+    grand_total = 0.0
+    grand_count = 0
+
+    for _, row in df.iterrows():
+        ltype = str(row["leakage_type"])
+        is_pinned = pinned == ltype
+        bg = "#e8eaf3" if is_pinned else "transparent"
+        border_left = f"3px solid {NAVY}" if is_pinned else "3px solid transparent"
+
+        cls_chip = row.get("classification", "")
+        cls_style = _CLASSIFICATION_STYLE.get(cls_chip, {})
+        chip = html.Span(cls_chip, style={
+            **cls_style,
+            "fontFamily": FONT_SANS,
+            "fontSize": "12px",
+            "fontWeight": "500",
+            "padding": "2px 8px",
+            "borderRadius": "2px",
+        })
+
+        data_rows.append(html.Tr(
+            id={"type": "leakage-row", "index": ltype},
+            n_clicks=0,
+            children=[
+                html.Td(str(row["display_name"]), style={
+                    **_LEDGER_CELL_STYLE,
+                    "borderLeft": border_left,
+                    "fontWeight": "600" if is_pinned else "400",
+                    "cursor": "pointer",
+                }),
+                html.Td(f"${float(row['dollar_total']):,.0f}", style={
+                    **_LEDGER_CELL_STYLE, "textAlign": "right", "cursor": "pointer",
+                }),
+                html.Td(f"{int(row['instance_count']):,}", style={
+                    **_LEDGER_CELL_STYLE, "textAlign": "right", "cursor": "pointer",
+                }),
+                html.Td(chip, style={**_LEDGER_CELL_STYLE, "cursor": "pointer"}),
+            ],
+            style={"background": bg},
+        ))
+
+        grand_total += float(row["dollar_total"])
+        grand_count += int(row["instance_count"])
+
+    total_row = html.Tr([
+        html.Td("Total", style={
+            **_LEDGER_CELL_STYLE,
+            "fontWeight": "700",
+            "borderTop": f"2px solid {INK}",
+            "borderLeft": "3px solid transparent",
+        }),
+        html.Td(f"${grand_total:,.0f}", style={
+            **_LEDGER_CELL_STYLE,
+            "fontWeight": "700",
+            "textAlign": "right",
+            "borderTop": f"2px solid {INK}",
+        }),
+        html.Td(f"{grand_count:,}", style={
+            **_LEDGER_CELL_STYLE,
+            "fontWeight": "700",
+            "textAlign": "right",
+            "borderTop": f"2px solid {INK}",
+        }),
+        html.Td("", style={
+            **_LEDGER_CELL_STYLE,
+            "borderTop": f"2px solid {INK}",
+        }),
+    ])
+
+    table = html.Table(
+        [html.Thead(header), html.Tbody(data_rows + [total_row])],
+        style={"width": "100%", "borderCollapse": "collapse"},
+    )
+
+    return html.Div(table, style={"overflowX": "auto"})
+
+
+# ---------------------------------------------------------------------------
+# Leakage instances AG Grid
+# ---------------------------------------------------------------------------
+
+def leakage_instances_grid(df: pd.DataFrame) -> "dash_ag_grid.AgGrid":
+    import dash_ag_grid as dag
+
+    col_defs = [
+        {"field": "deduction_id",  "headerName": "Deduction ID",   "width": 140},
+        {"field": "retailer_id",   "headerName": "Retailer",        "width": 160},
+        {"field": "promo_id",      "headerName": "Promo / Type",    "width": 150,
+         "valueFormatter": {"function": "params.value ?? '—'"}},
+        {"field": "period",        "headerName": "Date",            "width": 120},
+        {"field": "agreed_amount", "headerName": "Agreed ($)",      "width": 120,
+         "type": "numericColumn",
+         "valueFormatter": {"function": "params.value != null ? '$' + params.value.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—'"}},
+        {"field": "actual_amount", "headerName": "Actual ($)",      "width": 120,
+         "type": "numericColumn",
+         "valueFormatter": {"function": "'$' + params.value.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})"}},
+        {"field": "variance",      "headerName": "Variance ($)",    "width": 120,
+         "type": "numericColumn",
+         "valueFormatter": {"function": "params.value != null ? '$' + params.value.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—'"},
+         "cellStyle": {"function": "params.value > 0 ? {'color': '#b82d4a'} : {}"}},
+        {"field": "classification", "headerName": "Classification", "width": 140},
+    ]
+
+    return dag.AgGrid(
+        id="leakage-instances-grid",
+        rowData=df.to_dict("records"),
+        columnDefs=col_defs,
+        defaultColDef={
+            "resizable": True,
+            "sortable": True,
+            "filter": True,
+            "suppressMovable": True,
+        },
+        dashGridOptions={
+            "pagination": True,
+            "paginationPageSize": 20,
+            "domLayout": "autoHeight",
+        },
+        style={"height": None},
+        className="ag-theme-alpine",
+    )
