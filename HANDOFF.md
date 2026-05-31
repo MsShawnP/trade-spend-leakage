@@ -9,6 +9,18 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-05-31 22:00 — Full Heavy-tier planning complete
+
+**Started from:** Fresh project with only the portfolio brief. No git, no scaffolding, no spec.
+
+**Did:** Ran the full Heavy-tier workflow in one session: /new-project → /clarify → /office-hours → /plan-ceo-review → /plan-eng-review → /ce:brainstorm → /ce:plan. Key discoveries during /ce:plan: (1) `trade-spend-data-diagnostic` already exists with the Excel workbook fully built — this project is primarily the Dash dashboard layer on top; (2) Cinderhaven data is a SQLite snapshot exported from Postgres, not a live connection; (3) brief's leakage dollar amounts ($340K double-dips) are aspirational — actual data has 3 double-dips totaling $19K and 137 ghost promos at ~$96K.
+
+**State:** All planning gates complete. Requirements doc at `docs/brainstorms/trade-spend-leakage-requirements.md`. Implementation plan at `docs/plans/2026-05-31-001-feat-trade-spend-leakage-dashboard-plan.md`. No code written. Stack: Dash + Fly.io + SQLite snapshot + pre-computed `results.db`. Build order: U1 (setup) → U2 (Move 1 bump chart) → U3 (Move 3 leakage) → U4–U6 (Moves 2, 4, 5) → U7 (workbook) → U8 (deploy).
+
+**Next:** Start `/ce:work` on U1 — add `cinderhaven-data` as git submodule at `data/cinderhaven-data/`, scaffold `pipeline/db.py` with SQLite connection helpers (source + results), scaffold `app/app.py` Dash entry point. Reference: `retail-velocity-decision-tool/app/db.py` and `trade-spend-data-diagnostic/scripts/build_db.py`.
+
+---
+
 ## 2026-05-31 — Project initialized
 
 **Started from:** New project setup via /new-project.
