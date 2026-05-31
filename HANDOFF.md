@@ -50,6 +50,18 @@ Phase 1 — run /clarify next.
 
 ---
 
+## 2026-05-31 14:54
+
+**What changed:** U2 shipped — Move 1 bump chart + app shell (pipeline, app layer, callbacks, tests)
+
+**Why:** First shippable milestone. Establishes the full vertical slice: Postgres query → results.db → Dash chart → click-to-pin callout card.
+
+**State:** App imports and serves cleanly. 3 tests pass, 5 skip (need DATABASE_URL). Bump chart renders empty state until `pipeline/run.py --moves 1` is run with DATABASE_URL set. No move modules beyond Move 1 exist yet.
+
+**Next:** Set DATABASE_URL to Fly.io Postgres, run `python pipeline/run.py --moves 1` to populate results.db, verify bump chart renders live data, then `/ce:work` U3 (Move 3 leakage detection ledger).
+
+---
+
 ## 2026-05-31 14:36
 
 **What changed:** U1.5 shipped — source_conn() switched from SQLite snapshot to Fly.io Postgres via DATABASE_URL (psycopg2)
