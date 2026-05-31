@@ -27,19 +27,11 @@ def health():
     return jsonify({"status": "ok"})
 
 
-# Layout and callbacks registered when modules are available (U2+)
-try:
-    from app.layout import create_layout
-    from app.callbacks import register_callbacks
+from app.layout import create_layout
+from app.callbacks import register_callbacks
 
-    app.layout = create_layout()
-    register_callbacks(app)
-except ImportError:
-    from dash import html
-    app.layout = html.Div(
-        "Dashboard loading...",
-        style={"fontFamily": "sans-serif", "padding": "48px"},
-    )
+app.layout = create_layout()
+register_callbacks(app)
 
 
 if __name__ == "__main__":

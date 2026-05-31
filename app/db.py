@@ -33,6 +33,10 @@ def get_net_revenue() -> pd.DataFrame:
             "SELECT * FROM results_net_revenue ORDER BY net_revenue DESC",
             conn,
         )
+    except sqlite3.OperationalError:
+        return pd.DataFrame(columns=[
+            "retailer", "gross_revenue", "trade_spend", "net_revenue", "net_to_gross_ratio",
+        ])
     finally:
         conn.close()
 
@@ -45,7 +49,7 @@ def get_leakage_summary() -> pd.DataFrame:
             "SELECT * FROM results_leakage_summary",
             conn,
         )
-    except Exception:
+    except sqlite3.OperationalError:
         return pd.DataFrame(columns=[
             "leakage_type", "display_name", "dollar_total",
             "instance_count", "classification",
@@ -62,7 +66,7 @@ def get_trade_efficiency() -> pd.DataFrame:
             "SELECT * FROM results_trade_efficiency ORDER BY trade_spend_pct ASC",
             conn,
         )
-    except Exception:
+    except sqlite3.OperationalError:
         return pd.DataFrame(columns=[
             "retailer", "trade_spend_pct", "trade_spend", "gross_revenue",
             "total_promo_cost", "promo_period_revenue", "revenue_per_promo_dollar",
@@ -73,14 +77,14 @@ def get_trade_efficiency() -> pd.DataFrame:
 
 
 def get_promo_roi() -> pd.DataFrame:
-    """Return results_promo_roi as a DataFrame (75 rows, one per promo event)."""
+    """Return results_promo_roi as a DataFrame, one row per promo event."""
     conn = _connect()
     try:
         return pd.read_sql_query(
             "SELECT * FROM results_promo_roi ORDER BY promo_cost DESC",
             conn,
         )
-    except Exception:
+    except sqlite3.OperationalError:
         return pd.DataFrame(columns=[
             "promo_id", "sku_id", "retailer_id", "retailer",
             "start_week", "end_week", "promo_cost", "promo_type",
@@ -100,7 +104,7 @@ def get_accrual() -> pd.DataFrame:
             "SELECT * FROM results_accrual ORDER BY month ASC",
             conn,
         )
-    except Exception:
+    except sqlite3.OperationalError:
         return pd.DataFrame(columns=["month", "accrued", "actual", "variance"])
     finally:
         conn.close()
@@ -121,7 +125,7 @@ def get_leakage_instances(leakage_type: str | None = None) -> pd.DataFrame:
             "SELECT * FROM results_leakage_instances ORDER BY actual_amount DESC",
             conn,
         )
-    except Exception:
+    except sqlite3.OperationalError:
         return pd.DataFrame(columns=[
             "leakage_type", "deduction_id", "retailer_id", "promo_id",
             "period", "agreed_amount", "actual_amount", "variance", "classification",

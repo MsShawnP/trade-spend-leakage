@@ -103,3 +103,15 @@ Ship the Dash dashboard and linked Excel workbook across 8 implementation units,
 ## Improvement history
 
 <!-- Entries are added by /improve — don't delete this section -->
+
+### 2026-05-31 — Improvement pass
+- **Trigger:** User-initiated, post-ship pre-client cleanup
+- **What was reviewed:** README, app/app.py, app/db.py, project root, src/ directory, error handling
+- **What was fixed:**
+  - README: added live URL, "Deployed state" context, and data refresh pattern (fly proxy → pipeline → fly deploy)
+  - `app/db.py`: removed stale "75 rows" docstring from `get_promo_roi()`; narrowed all bare `except Exception:` to `except sqlite3.OperationalError:` for consistent, non-swallowing error handling; added same guard to `get_net_revenue()`
+  - `app/app.py`: removed dead try/except ImportError fallback that could never trigger
+  - Moved `portfolio_project_brief_trade_spend_leakage.md` from root to `docs/`
+  - Removed empty `src/CLAUDE.md` (src/ had no source code — conventions doc was misleading)
+- **Deferred:** None
+- **Next review:** 2026-07-01 (stable project, ~30-day cadence)

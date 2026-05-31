@@ -19,9 +19,15 @@ Built on synthetic Cinderhaven data. Part of the Lailara LLC consulting portfoli
 - **Pipeline:** Python — pre-computes all five analytical moves into `data/results.db`
 - **Workbook:** openpyxl — generated server-side on demand
 
-## How to run
+## Live demo
 
-**Prerequisites:** Python 3.11+, pip
+**https://trade-spend-leakage.fly.dev/**
+
+No login required. The dashboard runs on Fly.io with a pre-computed `results.db` baked into the image.
+
+## How to run locally
+
+**Prerequisites:** Python 3.11+, pip, access to the Cinderhaven Fly.io Postgres instance
 
 ```bash
 # 1. Clone and initialise the submodule
@@ -36,10 +42,14 @@ git submodule update --init
 # 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. Run the analysis pipeline (generates data/results.db)
+# 4. Set DATABASE_URL and start the Fly.io Postgres proxy
+fly proxy 5432 -a cinderhaven-db  # run in a separate terminal
+export DATABASE_URL=postgresql://postgres:<password>@localhost:5432/cinderhaven
+
+# 5. Run the analysis pipeline (generates data/results.db)
 python pipeline/run.py
 
-# 5. Start the dashboard
+# 6. Start the dashboard
 python app/app.py
 # → open http://localhost:8050
 ```
@@ -54,6 +64,20 @@ python pipeline/run.py --moves 1 3
 
 ```bash
 pytest tests/
+```
+
+## Refreshing the live deployment
+
+The deployed app uses a `results.db` baked into the Docker image at build time — there is no live database connection at runtime.
+
+To update the deployed data:
+
+```bash
+# 1. Run the pipeline locally (requires DATABASE_URL + fly proxy running)
+python pipeline/run.py
+
+# 2. Redeploy — fly deploy copies the updated results.db into the new image
+fly deploy
 ```
 
 ## Project state files
