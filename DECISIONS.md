@@ -38,10 +38,15 @@ Each entry:
 
 ## Data & Schema
 
-### 2026-05-31 — Use SQLite snapshot via `cinderhaven-data` git submodule, not live Postgres connection
-- **Why:** Every other Cinderhaven portfolio project uses this pattern (retail-velocity-decision-tool, trade-spend-data-diagnostic, retailer-deduction-recovery). Postgres (`cinderhaven-db` on Fly.io) is the data export source; applications consume the SQLite snapshot. Reconcilability to Postgres SSOT preserved via `flyctl postgres connect -a cinderhaven-db` export chain. Live Postgres connections add connection pooling complexity and runtime fragility for no benefit on synthetic fixed data.
-- **Scope:** Data architecture globally
-- **Do not:** Add a live DATABASE_URL Postgres connection to the Dash app. If Cinderhaven data changes, refresh via the export chain and rebuild the Docker image.
+### ~~2026-05-31 — Use SQLite snapshot via `cinderhaven-data` git submodule, not live Postgres connection~~ *(superseded 2026-05-31 — see Postgres entry below)*
+- ~~**Why:** Every other Cinderhaven portfolio project uses this pattern. Live Postgres adds connection pooling complexity.~~
+- ~~**Scope:** Data architecture globally~~
+- ~~**Do not:** Add a live DATABASE_URL Postgres connection.~~
+
+### 2026-05-31 — `source_conn()` must connect to Postgres (cinderhaven-data-platform), not SQLite snapshot *(supersedes SQLite entry above)*
+- **Why:** The Cinderhaven Data Platform (Fly.io Postgres + dbt pipeline) is the only SSOT. The SQLite approach was adopted following other portfolio projects, but this project's pipeline must query the live platform. SQLite submodule may be kept for offline reference only.
+- **Scope:** `pipeline/db.py` `source_conn()` and all pipeline move modules (U2–U6). `results_conn()` remains SQLite — that's pipeline output, not source data.
+- **Do not:** Build pipeline query logic against the SQLite submodule. Do not silently fall back to SQLite if `DATABASE_URL` is unset — fail loudly so the misconfiguration is visible.
 
 ### 2026-05-31 — Use actual Cinderhaven data numbers; brief's leakage targets were aspirational
 - **Why:** The brief's specific dollar amounts ($340K double-dips, $180K phantom promos, $95K rate discrepancies) were written before the data was built. Verified actual numbers: 3 double-dips / $19K, 137 ghost promos / ~$96K, trailing-365 deductions $1.2M, structural trade spend $4.4M (17.3%). The story is still compelling on real numbers and more credible than inflated targets.

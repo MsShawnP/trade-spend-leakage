@@ -49,3 +49,15 @@ Phase 1 — run /clarify next.
 **Next:** `/ce:work` U2 — `pipeline/move1_net_revenue.py` + `app/layout.py` + `app/charts.py` + `app/callbacks.py` + `app/db.py` (results reader). First shippable dashboard milestone.
 
 ---
+
+## 2026-05-31 23:45 — Wrap: U1 complete, Phase 2 underway
+
+**Started from:** All Heavy-tier planning done, no code written.
+
+**Did:** Executed U1 end-to-end — cinderhaven-data submodule, pipeline/db.py (SQLite connection helpers), pipeline/run.py (--moves orchestrator), app/app.py (Dash skeleton), app/constants.py (Lailara tokens + channel rate map), requirements.txt, 4 passing tests. Key discovery: submodule clone omits the .db file (gitignored) — copy from trade-spend-data-diagnostic's submodule or export from Fly.io.
+
+**State:** `pipeline/run.py --moves none` exits 0. `from app.app import app` clean. 4/4 tests green. DB present locally at `data/cinderhaven-data/data/cinderhaven_product_master.db`. No move modules (U2+) exist yet.
+
+**Next:** Before U2 — switch `pipeline/db.py` `source_conn()` from SQLite snapshot to Postgres (cinderhaven-data-platform on Fly.io via `DATABASE_URL`). The SQLite approach in U1 is a placeholder; the Cinderhaven Data Platform Postgres is the only SSOT. Once source_conn() is wired to Postgres, proceed with U2: `pipeline/move1_net_revenue.py` + `app/db.py` + `app/layout.py` + `app/charts.py` (`bump_chart()`) + `app/callbacks.py` (click-to-pin).
+
+---

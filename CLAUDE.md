@@ -10,11 +10,22 @@ Forensic trade spend analysis for specialty food brands ($5M–$30M). Detects le
 
 ## Stack and tools
 
-- Primary language: TBD — determined during /clarify and /ce:brainstorm
-- Key packages/libraries: TBD
-- Database: Cinderhaven Data Platform (synthetic) — `fct_deductions`, promotional, and POS marts
-- Entry point: TBD
-- Other tools: Excel workbook (CFO deliverable); interactive dashboard (stack TBD — not Streamlit)
+- Primary language: Python (Dash + pipeline)
+- Key packages: Dash, dash-bootstrap-components, dash-ag-grid, Plotly, pandas, openpyxl, gunicorn
+- Database: see Data architecture below
+- Entry point: `app/app.py` (dashboard), `pipeline/run.py` (analysis pipeline)
+- Other tools: Excel workbook (CFO deliverable via openpyxl + dcc.Download)
+
+## Data architecture
+
+**The Cinderhaven Data Platform (Fly.io Postgres + dbt pipeline) is the only SSOT for all Cinderhaven data.**
+
+**⚠ PENDING CHANGE: This project's data source must be switched from the SQLite snapshot to direct Postgres connection (cinderhaven-data-platform on Fly.io). The SQLite approach in U1 is a placeholder. Before U2 ships to production, `pipeline/db.py` `source_conn()` must connect to Postgres via `DATABASE_URL`, not the local SQLite file. Update the plan and Dockerfile accordingly.**
+
+- `data/cinderhaven-data/` is a git submodule containing a read-only SQLite snapshot. It was used for U1 scaffolding only — do not build further pipeline logic on top of it.
+- If a number in the SQLite file disagrees with the Postgres platform, trust Postgres.
+- This project never writes to Postgres. Read-only without exception.
+- `data/results.db` is this project's pipeline output — gitignored.
 
 ## Project files
 
