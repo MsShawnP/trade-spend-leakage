@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+.env
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / JS (if dashboard uses a JS framework)
+node_modules/
+.next/
+dist/
+.env*.local
+
+# Data files (never commit real client data)
+data/raw/
+data/client/
+*.csv
+*.xlsx
+*.xls
+!data/synthetic/**
+!tests/fixtures/**
+
+# Excel outputs (generated, not source)
+output/
+*.xlsm
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Secrets
+.env
+.env.*
+*.key
+credentials.*
+secrets.*
