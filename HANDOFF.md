@@ -157,3 +157,15 @@ Phase 1 — run /clarify next.
 **Next:** `/ce:work` U5 — Move 4 Promotional ROI. Read U5 spec in plan. Adapt `retail-velocity-decision-tool/app/decisions/promo_roi.py`. Note: `promotions.retailer_id` uses `RET-*` format — carry into U5 SQL.
 
 ---
+
+## 2026-05-31 17:30
+
+**What changed:** U5 shipped — Move 4 Promotional ROI scatter chart + rolling-median baseline pipeline
+
+**Why:** Fourth dashboard section. Per-promo incremental revenue vs cost, 8-week pre-promo rolling median baseline. Key discovery: Postgres `promotions` table uses column `sku` (not `sku_id`) — fixed mid-run. Postgres dataset has 138 distinct promo events (vs plan's SQLite-based estimate of 75); 131 have sufficient baseline.
+
+**State:** Four sections functional (Moves 1, 2, 3, 4). `python pipeline/run.py --moves 4` writes `results_promo_roi` — 138 events, 131 measurable, 121 money-losing. Scatter chart renders with break-even line; click-to-pin callout works. 14 tests pass (7 offline, 7 live). U6–U8 not started.
+
+**Next:** `/ce:work` U6 — Move 5 Accrual Reconciliation: `pipeline/move5_accrual.py` + grouped bar chart (accrued vs actual by month, last 12 months). Reference: `trade-spend-data-diagnostic/workbook/tab_executive_pulse.py`.
+
+---
