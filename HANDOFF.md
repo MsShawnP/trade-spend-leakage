@@ -193,3 +193,15 @@ Phase 1 — run /clarify next.
 **Next:** `/ce:work` U6 — Move 5 Accrual Reconciliation: `pipeline/move5_accrual.py` + grouped bar chart (accrued vs actual by month, last 12 months). Reference: `trade-spend-data-diagnostic/workbook/tab_executive_pulse.py`.
 
 ---
+
+## 2026-05-31 21:00
+
+**What changed:** U7 shipped — Excel workbook generation + download button
+
+**Why:** CFO credibility artifact. Six-sheet openpyxl workbook (Summary, Net Revenue Ranking, Leakage Detection, Trade Spend Efficiency, Promotional ROI, Accrual Reconciliation) generated server-side from results.db; streamed via `dcc.Download`. Handles partial build state — missing tables produce a placeholder row, not an error.
+
+**State:** All 7 units through U7 complete. 18 offline tests pass (21 skip, need DATABASE_URL). App imports clean. `workbook/` package with 8 modules committed. "Download Workbook" button wired in layout + callbacks. U8 (Fly.io deployment) is the only remaining task.
+
+**Next:** `/ce:work` U8 — Dockerfile + fly.toml + run.py entry point. Follow `retail-velocity-decision-tool/Dockerfile` pattern. Bake results.db into the image during build (pipeline runs at build time, no live DB at runtime).
+
+---
