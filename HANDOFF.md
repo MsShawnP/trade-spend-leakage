@@ -9,6 +9,18 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-05-31 — Wrap: /improve complete, project client-ready
+
+**Started from:** Project fully shipped (U8 complete). Dashboard live at https://trade-spend-leakage.fly.dev/. HANDOFF recommended a pre-client `/improve` pass.
+
+**Did:** Ran full `/improve` audit. Fixed all 6 findings: README updated with live URL + deployed-state context + data refresh pattern; stale "75 rows" docstring removed from `app/db.py`; dead ImportError fallback removed from `app/app.py`; portfolio brief moved from root to `docs/`; empty `src/CLAUDE.md` removed; bare `except Exception` narrowed to `except sqlite3.OperationalError` across all 6 db readers. 18/18 tests pass.
+
+**State:** Project is complete and client-ready. No open tasks. Dashboard live and stable.
+
+**Next:** No active work. If returning: (a) data refresh — run pipeline locally → `fly deploy`; (b) new analytical move; or (c) adapt for a real client's data.
+
+---
+
 ## 2026-05-31 23:00 — Wrap: U8 complete, project deployed
 
 **Started from:** U7 complete, all 5 analytical moves functional, U8 (Fly.io deployment) the only remaining task.
