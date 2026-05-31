@@ -109,3 +109,15 @@ Phase 1 — run /clarify next.
 **Next:** `/ce:work` U3 — Move 3 leakage detection ledger + AG Grid expand.
 
 ---
+
+## 2026-05-31 15:29
+
+**What changed:** U3 complete — leakage detection pipeline + dashboard ledger + AG Grid drill-down.
+
+**Why:** Second shippable milestone. Four sub-type detection queries against live Postgres; clickable summary ledger; instance AG Grid expands on row click.
+
+**State:** `pipeline/run.py --moves 3` populates 2,512 instances / $235,760 total leakage. Dashboard renders Move 1 bump chart + Move 3 leakage ledger. 12 tests pass (3 offline, 9 live). Proxy must be running for pipeline. U4–U8 not started.
+
+**Next:** `/ce:work` U4 — Move 2 Trade Spend Efficiency dual-measure chart.
+
+---
