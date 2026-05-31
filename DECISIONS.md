@@ -48,6 +48,16 @@ Each entry:
 - **Scope:** `pipeline/db.py` `source_conn()` and all pipeline move modules (U2–U6). `results_conn()` remains SQLite — that's pipeline output, not source data.
 - **Do not:** Build pipeline query logic against the SQLite submodule. Do not silently fall back to SQLite if `DATABASE_URL` is unset — fail loudly so the misconfiguration is visible.
 
+### 2026-05-31 — Pipeline move modules use psycopg2 cursor pattern, not SQLite conn.execute()
+- **Why:** `source_conn()` yields a psycopg2 connection. psycopg2 connections don't have `.execute()` — callers must create a cursor. Without `RealDictCursor`, rows are plain tuples and column-name access breaks silently.
+- **Scope:** All pipeline move modules (U2–U6).
+- **Do not:** Call `conn.execute()` on a source connection — that's the SQLite pattern. Always use `conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)`.
+
+### 2026-05-31 — scan_data retailer names come from stores join, not a direct column
+- **Why:** `scan_data` has `store_id`, not `retailer_id`. Retailer display names (`'Walmart'`, `'Whole Foods'`, etc.) come from `JOIN stores ON store_id`. Pipeline SQL CASE statements must match these display names. `constants.py` slug keys (`'walmart'`, `'whole_foods'`) are an app-layer convention only. Getting this wrong silently produces NULL trade rates.
+- **Scope:** All pipeline move modules that aggregate by retailer (U2–U6 and any future moves).
+- **Do not:** Reference `scan_data.retailer_id` — it doesn't exist. Do not use slug keys in pipeline SQL CASE statements.
+
 ### 2026-05-31 — Use actual Cinderhaven data numbers; brief's leakage targets were aspirational
 - **Why:** The brief's specific dollar amounts ($340K double-dips, $180K phantom promos, $95K rate discrepancies) were written before the data was built. Verified actual numbers: 3 double-dips / $19K, 137 ghost promos / ~$96K, trailing-365 deductions $1.2M, structural trade spend $4.4M (17.3%). The story is still compelling on real numbers and more credible than inflated targets.
 - **Scope:** All dashboard displays and workbook figures

@@ -50,6 +50,18 @@ Phase 1 — run /clarify next.
 
 ---
 
+## 2026-05-31 14:55 — Wrap: U1.5 + U2 complete
+
+**Started from:** U1 complete (submodule, pipeline scaffold, Dash skeleton). U1.5 (Postgres source_conn switch) was the required gate before any move pipeline logic.
+
+**Did:** U1.5 — switched source_conn() to Fly.io Postgres via DATABASE_URL (psycopg2), updated tests. U2 — full vertical slice for Move 1: pipeline query (scan_data→stores→sku_costs CTE), results.db writer, bump chart (go.Scatter, click-to-pin), dark callout card, section layout, callbacks. 3 tests pass, 5 skip (need DATABASE_URL).
+
+**State:** App imports and serves. Bump chart renders empty state until pipeline runs with DATABASE_URL set. No U3+ code exists.
+
+**Next:** Set DATABASE_URL to Fly.io Postgres, run `python pipeline/run.py --moves 1` to populate results.db and verify live data, then `/ce:work` U3 — Move 3 leakage detection ledger + AG Grid expand.
+
+---
+
 ## 2026-05-31 14:54
 
 **What changed:** U2 shipped — Move 1 bump chart + app shell (pipeline, app layer, callbacks, tests)
