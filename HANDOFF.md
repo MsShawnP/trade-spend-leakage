@@ -9,6 +9,18 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-05-31 23:00 — Wrap: U8 complete, project deployed
+
+**Started from:** U7 complete, all 5 analytical moves functional, U8 (Fly.io deployment) the only remaining task.
+
+**Did:** Wrote Dockerfile + fly.toml + run.py + .dockerignore. Created Fly app. Hit Depot DNS wall (build-time pipeline approach failed — Depot servers can't reach cinderhaven-db.internal). Switched to pre-generated results.db baked in via COPY. Deployed successfully. Phase 2 definition of done fully satisfied.
+
+**State:** Dashboard live at https://trade-spend-leakage.fly.dev/ — health check 200, all 5 moves functional, workbook download wired. Two Fly machines running. results.db baked into image (352 KB). All 8 units complete.
+
+**Next:** Phase 2 is done. Run /improve for a pre-client cleanup pass. Also document the refresh pattern (run pipeline locally → fly deploy) in README.
+
+---
+
 ## 2026-05-31 22:00 — Full Heavy-tier planning complete
 
 **Started from:** Fresh project with only the portfolio brief. No git, no scaffolding, no spec.

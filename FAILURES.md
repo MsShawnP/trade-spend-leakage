@@ -128,6 +128,20 @@ failed and may have its own entry below]
 
 ---
 
+### 2026-05-31 — Fly Depot build servers cannot reach Fly private network
+
+**Attempted:** Designed the Dockerfile to run `python pipeline/run.py` at build time using a BuildKit secret (`--mount=type=secret,id=DATABASE_URL`). The DATABASE_URL was set to `postgres://...@cinderhaven-db.internal:5432/...` so the pipeline could populate `results.db` during `fly deploy`.
+
+**Why it didn't work:** Fly Depot (the remote build system used by `fly deploy`) does not run on the Fly private network. DNS resolution for `.internal` and `.flycast` hostnames fails with `could not translate host name "cinderhaven-db.internal": Name or service not known`. The Fly 6PN private network is only accessible from deployed Fly Machines, not from Depot build containers.
+
+**What we tried instead:** Pre-generated `results.db` locally (already present from development), removed it from `.dockerignore`, and let `COPY . .` include it in the image. Same end result — results.db baked into the image, no live DB needed at runtime — without requiring build-time network access. Simplified the Dockerfile considerably (no `--mount=type=secret` needed). Refresh pattern: run pipeline locally, then `fly deploy`.
+
+**Status:** Resolved.
+
+**Tags:** fly, depot, build, private-network, internal, DATABASE_URL, dockerfile, deployment, postgres
+
+---
+
 ### 2026-05-31 — charts.py edit duplicated a function by targeting the wrong insertion point
 
 **Attempted:** Used Edit to insert `accrual_chart()` before `_apply_promo_roi_layout` in `charts.py`. The old_string matched the function *signature line*, but the function body immediately followed — so the edit inserted new code before the signature, then the original body was still there, producing two complete definitions of `_apply_promo_roi_layout` plus a junk sentinel variable.

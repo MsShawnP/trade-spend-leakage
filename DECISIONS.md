@@ -93,6 +93,11 @@ Each entry:
 - **Scope:** All dashboard verification for this project (U4–U8).
 - **Do not:** Rely on `preview_screenshot` to verify that chart data rendered correctly. Use it only for visual spot-checks where a timeout is acceptable. Use `curl http://127.0.0.1:<port>/_dash-layout | python -c "..."` for data/structure verification.
 
+### 2026-05-31 — results.db is pre-generated locally and baked into the Docker image via COPY
+- **Why:** Fly Depot build servers don't have access to the Fly private network, so the pipeline can't connect to `cinderhaven-db.internal` during `fly deploy`. Pre-generating locally and including via `COPY` is simpler and equally reliable for synthetic data that doesn't change frequently.
+- **Scope:** trade-spend-leakage Dockerfile and deployment process
+- **Do not:** Attempt to run `pipeline/run.py` during Docker build via a build secret or build arg — Depot DNS will fail on any `.internal` / `.flycast` hostname. To refresh data: run pipeline locally, then `fly deploy`.
+
 ---
 
 ## Visualization
