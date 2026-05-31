@@ -1,37 +1,41 @@
-"""SQLite connection helpers for the trade spend pipeline.
+"""Connection helpers for the trade spend pipeline.
 
 Two connections:
-  source_conn() — read-only to cinderhaven_product_master.db (never write)
+  source_conn() — read-only to Cinderhaven Postgres on Fly.io (never write)
   results_conn() — read-write to data/results.db (pipeline output)
 """
 
 from __future__ import annotations
 
+import os
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
+import psycopg2
+
 ROOT = Path(__file__).resolve().parent.parent
-SOURCE_DB = ROOT / "data" / "cinderhaven-data" / "data" / "cinderhaven_product_master.db"
 RESULTS_DB = ROOT / "data" / "results.db"
 
 
 @contextmanager
 def source_conn():
-    """Read-only connection to the Cinderhaven source database.
+    """Read-only connection to the Cinderhaven Postgres database on Fly.io.
 
-    Raises FileNotFoundError if the database has not been initialised.
-    Run `git submodule update --init` and copy cinderhaven_product_master.db
-    into data/cinderhaven-data/data/ before using this.
+    Requires DATABASE_URL env var set to the cinderhaven-data-platform
+    connection string.  Raises RuntimeError if DATABASE_URL is not set.
+    Never writes — callers must not issue DML.
     """
-    if not SOURCE_DB.exists():
-        raise FileNotFoundError(
-            f"Cinderhaven source database not found: {SOURCE_DB}\n"
-            "Run: git submodule update --init\n"
-            "Then copy cinderhaven_product_master.db into data/cinderhaven-data/data/"
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        raise RuntimeError(
+            "DATABASE_URL is not set.\n"
+            "Export the Fly.io Postgres connection string before running the pipeline:\n"
+            "  $env:DATABASE_URL = 'postgresql://user:pass@host:port/db'  # PowerShell\n"
+            "  export DATABASE_URL=postgresql://user:pass@host:port/db    # bash"
         )
-    conn = sqlite3.connect(f"file:{SOURCE_DB}?mode=ro", uri=True)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(database_url)
+    conn.set_session(readonly=True, autocommit=True)
     try:
         yield conn
     finally:

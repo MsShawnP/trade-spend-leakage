@@ -1,24 +1,40 @@
 """Tests for pipeline.db connection helpers."""
 
+import os
 import sqlite3
 import pytest
+import psycopg2.extras
 from pathlib import Path
 
 
+# ---------------------------------------------------------------------------
+# source_conn — Postgres
+# ---------------------------------------------------------------------------
+
+@pytest.mark.skipif(
+    not os.environ.get("DATABASE_URL"),
+    reason="DATABASE_URL not set — skipping live Postgres test",
+)
 def test_source_conn_returns_valid_connection():
     from pipeline.db import source_conn
     with source_conn() as conn:
-        row = conn.execute("SELECT COUNT(*) AS n FROM scan_data").fetchone()
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute("SELECT COUNT(*) AS n FROM scan_data")
+            row = cur.fetchone()
     assert row["n"] > 0
 
 
-def test_source_conn_missing_db_raises_file_not_found(tmp_path, monkeypatch):
-    import pipeline.db as db_module
-    monkeypatch.setattr(db_module, "SOURCE_DB", tmp_path / "missing.db")
-    with pytest.raises(FileNotFoundError, match="missing.db"):
-        with db_module.source_conn():
+def test_source_conn_missing_database_url_raises_error(monkeypatch):
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    from pipeline.db import source_conn
+    with pytest.raises(RuntimeError, match="DATABASE_URL"):
+        with source_conn():
             pass
 
+
+# ---------------------------------------------------------------------------
+# results_conn — SQLite
+# ---------------------------------------------------------------------------
 
 def test_results_conn_creates_db_when_absent(tmp_path, monkeypatch):
     import pipeline.db as db_module
