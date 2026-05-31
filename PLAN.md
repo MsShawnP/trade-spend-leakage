@@ -76,7 +76,7 @@ Ship the Dash dashboard and linked Excel workbook across 8 implementation units,
 - [x] U4 — Move 2: Trade Spend Efficiency dual-measure chart
 - [x] U5 — Move 4: Promotional ROI scatter chart + rolling-median baseline
 - [x] U6 — Move 5: Accrual Reconciliation bar chart
-- [ ] U7 — Excel workbook generation + download button
+- [x] U7 — Excel workbook generation + download button
 - [ ] U8 — Fly.io deployment
 
 ### Definition of done for Phase 2
