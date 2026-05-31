@@ -133,3 +133,15 @@ Phase 1 — run /clarify next.
 **Next:** `/ce:work` U4 — Move 2 Trade Spend Efficiency dual-measure chart. Read U4 section of implementation plan, then check `trade-spend-data-diagnostic` for efficiency query pattern.
 
 ---
+
+## 2026-05-31 16:10
+
+**What changed:** U4 complete — Move 2 Trade Spend Efficiency pipeline + dual-measure chart
+
+**Why:** Third dashboard section. Per-retailer structural trade spend % + promo revenue-per-dollar from Postgres. Key discovery: `promotions.retailer_id` uses `RET-WALMART` format (not lowercase slugs like deductions); slug_map corrected mid-run.
+
+**State:** All three sections functional (Move 1, Move 2, Move 3). `python pipeline/run.py --moves 2` writes `results_trade_efficiency` — 6 retailers, trade spend 7–12%, all measurable. Chart renders as dual horizontal bar with HK teal gradient + 17% reference line. U5–U8 not started.
+
+**Next:** `/ce:work` U5 — Move 4 Promotional ROI scatter chart + rolling-median baseline.
+
+---
