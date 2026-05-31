@@ -37,3 +37,15 @@ Phase 1 — run /clarify next.
 /plan-eng-review to complete the Heavy-tier gates before any code is written.
 
 ---
+
+## 2026-05-31 23:30 — U1 complete: submodule, pipeline scaffold, app skeleton
+
+**What changed:** U1 shipped — git submodule, pipeline/db.py, pipeline/run.py, app/app.py, app/constants.py, requirements.txt, 4 passing tests.
+
+**Why:** First buildable unit of Phase 2. Establishes the data path (cinderhaven-data → pipeline → results.db) and Dash entry point before any analytical code.
+
+**State:** `pipeline/run.py --moves none` exits 0. `from app.app import app` imports cleanly. `tests/test_pipeline_db.py` 4/4 green. `data/cinderhaven-data/data/cinderhaven_product_master.db` present (copied from published project — not git-tracked). No move modules exist yet (U2+).
+
+**Next:** `/ce:work` U2 — `pipeline/move1_net_revenue.py` + `app/layout.py` + `app/charts.py` + `app/callbacks.py` + `app/db.py` (results reader). First shippable dashboard milestone.
+
+---
