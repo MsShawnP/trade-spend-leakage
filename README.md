@@ -14,11 +14,47 @@ Built on synthetic Cinderhaven data. Part of the Lailara LLC consulting portfoli
 
 ## Stack
 
-TBD — determined during planning phase.
+- **Dashboard:** Plotly Dash + dash-bootstrap-components, deployed to Fly.io
+- **Data:** SQLite snapshot of Cinderhaven Provisions synthetic data (via `cinderhaven-data` submodule)
+- **Pipeline:** Python — pre-computes all five analytical moves into `data/results.db`
+- **Workbook:** openpyxl — generated server-side on demand
 
 ## How to run
 
-TBD.
+**Prerequisites:** Python 3.11+, pip
+
+```bash
+# 1. Clone and initialise the submodule
+git clone <repo-url>
+git submodule update --init
+
+# 2. Copy the Cinderhaven database into the submodule data/ directory
+# (the .db file is not tracked in git — copy from a sibling project or
+#  export from Fly.io: flyctl postgres connect -a cinderhaven-db)
+# cp /path/to/cinderhaven_product_master.db data/cinderhaven-data/data/
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Run the analysis pipeline (generates data/results.db)
+python pipeline/run.py
+
+# 5. Start the dashboard
+python app/app.py
+# → open http://localhost:8050
+```
+
+**Run a specific move only:**
+
+```bash
+python pipeline/run.py --moves 1 3
+```
+
+**Run tests:**
+
+```bash
+pytest tests/
+```
 
 ## Project state files
 

@@ -23,6 +23,7 @@ dist/
 # Data files (never commit real client data)
 data/raw/
 data/client/
+data/results.db
 *.csv
 *.xlsx
 *.xls
