@@ -73,7 +73,7 @@ Ship the Dash dashboard and linked Excel workbook across 8 implementation units,
 - [x] U1.5 — Switch `pipeline/db.py` `source_conn()` from SQLite to Postgres (`DATABASE_URL` via psycopg2) — required before any move pipeline logic is written
 - [x] U2 — Move 1: Net Revenue Ranking bump chart + app shell (first shippable milestone)
 - [x] U3 — Move 3: Leakage Detection ledger + AG Grid expand (second shippable milestone)
-- [ ] U4 — Move 2: Trade Spend Efficiency dual-measure chart
+- [x] U4 — Move 2: Trade Spend Efficiency dual-measure chart
 - [ ] U5 — Move 4: Promotional ROI scatter chart + rolling-median baseline
 - [ ] U6 — Move 5: Accrual Reconciliation bar chart
 - [ ] U7 — Excel workbook generation + download button

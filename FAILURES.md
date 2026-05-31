@@ -97,3 +97,17 @@ failed and may have its own entry below]
 **Status:** Resolved. Rule going forward: always query live schema before writing pipeline SQL against a new source table.
 
 **Tags:** postgres, schema, sql, column-names, raw-schema, pipeline, move1, move3
+
+---
+
+### 2026-05-31 — promotions.retailer_id uses RET-* format, not lowercase slugs
+
+**Attempted:** Built the slug_map VALUES CTE in `pipeline/move2_efficiency.py` using lowercase slug format (`'walmart' → 'Walmart'`), consistent with `retailer_deductions.retailer_id` and the project constants. First pipeline run returned 0 retailers with measurable lift.
+
+**Why it didn't work:** `raw.promotions.retailer_id` uses `RET-WALMART` / `RET-COSTCO` format — a different convention than `raw.retailer_deductions.retailer_id` which uses `walmart` / `costco`. The JOIN on `sm.slug = p.retailer_id` matched nothing. One diagnostic query (`SELECT DISTINCT retailer_id FROM raw.promotions`) exposed the format immediately.
+
+**What we tried instead:** Updated the VALUES CTE and `_SLUG_TO_DISPLAY` dict to use `RET-*` keys. Re-ran pipeline — 6/6 retailers measurable. Also discovered live chain_names are Walmart, Costco, Kroger, Whole Foods, Sprouts, Regional Group — not the UNFI/KeHE/DTC set in constants.py (which reflects the SQLite snapshot, not Postgres).
+
+**Status:** Resolved.
+
+**Tags:** postgres, promotions, retailer_id, slug-format, RET-format, move2, pipeline, schema

@@ -145,3 +145,15 @@ Phase 1 — run /clarify next.
 **Next:** `/ce:work` U5 — Move 4 Promotional ROI scatter chart + rolling-median baseline.
 
 ---
+
+## 2026-05-31 16:15
+
+**Started from:** U3 complete. Move 1 bump chart + Move 3 leakage ledger verified against live Postgres.
+
+**Did:** U4 full vertical slice — `pipeline/move2_efficiency.py` (Postgres CTE with DISTINCT ON dedup, RET-* retailer_id format), `get_trade_efficiency()` db reader, `efficiency_chart()` make_subplots dual horizontal bar (HK teal gradient), `_section_efficiency()` section in layout between Move 1 and Move 3. Hit and fixed RET-* slug format mismatch mid-run.
+
+**State:** Three sections functional (Move 1, 2, 3). All 6 retailers measurable in Move 2. `python pipeline/run.py --moves 1 2 3` populates all tables. App imports and serves cleanly. U5–U8 not started.
+
+**Next:** `/ce:work` U5 — Move 4 Promotional ROI. Read U5 spec in plan. Adapt `retail-velocity-decision-tool/app/decisions/promo_roi.py`. Note: `promotions.retailer_id` uses `RET-*` format — carry into U5 SQL.
+
+---

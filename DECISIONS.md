@@ -63,6 +63,11 @@ Each entry:
 - **Scope:** All pipeline `run()` functions (U2–U6) that read from Postgres and write to results.db.
 - **Do not:** Pass a DataFrame with `decimal.Decimal` columns to `df.to_sql()` on a SQLite connection. Always cast numeric columns with `df[col] = df[col].astype(float)` first.
 
+### 2026-05-31 — promotions.retailer_id uses RET-* format; retailer_deductions uses lowercase slugs
+- **Why:** Discovered during U4 when the slug_map VALUES CTE produced zero matches. `raw.promotions.retailer_id` = `RET-WALMART`, `RET-COSTCO`, etc. `raw.retailer_deductions.retailer_id` = `walmart`, `costco`, etc. Two different conventions coexist in the same Postgres schema with no documentation.
+- **Scope:** All pipeline modules that join against `raw.promotions` (U4 move2_efficiency, U5 move4_promo_roi, and any future moves).
+- **Do not:** Use `app/constants.py` `CHANNEL_RATE_COLS` keys or `RETAILER_DISPLAY` keys as the join key against `raw.promotions.retailer_id` — they will always miss. Use the `RET-*` format for promotions joins only.
+
 ### 2026-05-31 — scan_data retailer names come from stores join, not a direct column
 - **Why:** `scan_data` has `store_id`, not `retailer_id`. Retailer display names (`'Walmart'`, `'Whole Foods'`, etc.) come from `JOIN stores ON store_id`. Pipeline SQL CASE statements must match these display names. `constants.py` slug keys (`'walmart'`, `'whole_foods'`) are an app-layer convention only. Getting this wrong silently produces NULL trade rates.
 - **Scope:** All pipeline move modules that aggregate by retailer (U2–U6 and any future moves).
