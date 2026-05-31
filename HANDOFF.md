@@ -121,3 +121,15 @@ Phase 1 — run /clarify next.
 **Next:** `/ce:work` U4 — Move 2 Trade Spend Efficiency dual-measure chart.
 
 ---
+
+## 2026-05-31 15:33
+
+**Started from:** U2 code-complete but never run against live Postgres. DATABASE_URL unset.
+
+**Did:** Wired Fly.io Postgres locally (proxy + .env). Fixed 4 bugs in move1 SQL (raw. prefix, chain_name, Sprouts rate, Decimal cast). Fixed sys.path in app.py and run.py. Verified U2 live (6 retailers). Implemented U3 full vertical slice: 4 leakage detection functions, 2,512 instances / $235,760, ledger + AG Grid click-to-expand, 12 passing tests. Updated plan with actual Postgres numbers.
+
+**State:** Move 1 bump chart + Move 3 leakage ledger fully functional against live Postgres. `fly proxy 5432 -a cinderhaven-db` must be running for pipeline. Preview screenshot tool times out with Plotly — use `/_dash-layout` JSON to verify instead. U4–U8 not started.
+
+**Next:** `/ce:work` U4 — Move 2 Trade Spend Efficiency dual-measure chart. Read U4 section of implementation plan, then check `trade-spend-data-diagnostic` for efficiency query pattern.
+
+---

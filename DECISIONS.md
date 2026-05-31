@@ -48,10 +48,20 @@ Each entry:
 - **Scope:** `pipeline/db.py` `source_conn()` and all pipeline move modules (U2–U6). `results_conn()` remains SQLite — that's pipeline output, not source data.
 - **Do not:** Build pipeline query logic against the SQLite submodule. Do not silently fall back to SQLite if `DATABASE_URL` is unset — fail loudly so the misconfiguration is visible.
 
+### 2026-05-31 — Query live Postgres schema before writing any pipeline SQL against a new source table
+- **Why:** Postgres schema diverges from the SQLite snapshot in column names (`chain_name` not `retailer`), schema prefix (`raw.scan_data` not `scan_data`), missing flags (`is_double_dip` doesn't exist), and ID formats (`RET-WALMART` not `walmart`). Writing SQL against assumptions produces silent wrong results; discovering at verification time costs a full debug cycle.
+- **Scope:** All pipeline move modules (U4–U6 and any future moves).
+- **Do not:** Write pipeline SQL against a new source table without first running `information_schema.columns` + `SELECT DISTINCT` on key fields + row count. 5 minutes of schema exploration prevents hours of debugging.
+
 ### 2026-05-31 — Pipeline move modules use psycopg2 cursor pattern, not SQLite conn.execute()
 - **Why:** `source_conn()` yields a psycopg2 connection. psycopg2 connections don't have `.execute()` — callers must create a cursor. Without `RealDictCursor`, rows are plain tuples and column-name access breaks silently.
 - **Scope:** All pipeline move modules (U2–U6).
 - **Do not:** Call `conn.execute()` on a source connection — that's the SQLite pattern. Always use `conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)`.
+
+### 2026-05-31 — Cast Postgres numeric results to float before writing to SQLite via pandas to_sql
+- **Why:** Postgres returns `numeric` columns as `decimal.Decimal` objects. SQLite's `sqlite3` module doesn't support `decimal.Decimal` as a bind parameter — raises `ProgrammingError: type 'decimal.Decimal' is not supported`. The cast must happen before `df.to_sql()`, not after.
+- **Scope:** All pipeline `run()` functions (U2–U6) that read from Postgres and write to results.db.
+- **Do not:** Pass a DataFrame with `decimal.Decimal` columns to `df.to_sql()` on a SQLite connection. Always cast numeric columns with `df[col] = df[col].astype(float)` first.
 
 ### 2026-05-31 — scan_data retailer names come from stores join, not a direct column
 - **Why:** `scan_data` has `store_id`, not `retailer_id`. Retailer display names (`'Walmart'`, `'Whole Foods'`, etc.) come from `JOIN stores ON store_id`. Pipeline SQL CASE statements must match these display names. `constants.py` slug keys (`'walmart'`, `'whole_foods'`) are an app-layer convention only. Getting this wrong silently produces NULL trade rates.
@@ -67,6 +77,11 @@ Each entry:
 - **Why:** Trade spend rates by retailer are among the most sensitive numbers a brand has — proprietary negotiation data. Cinderhaven is the standard synthetic brand for all Lailara portfolio pieces.
 - **Scope:** All data used in this project
 - **Do not:** Use real brand data.
+
+### 2026-05-31 — Use `/_dash-layout` JSON to verify dashboard, not preview screenshot
+- **Why:** Preview screenshot tool times out (30s) with Plotly's JS bundle. `/_dash-layout` returns the full component tree and figure data as JSON — verifies component IDs, trace counts, callback wiring, and data values reliably and instantly.
+- **Scope:** All dashboard verification for this project (U4–U8).
+- **Do not:** Rely on `preview_screenshot` to verify that chart data rendered correctly. Use it only for visual spot-checks where a timeout is acceptable. Use `curl http://127.0.0.1:<port>/_dash-layout | python -c "..."` for data/structure verification.
 
 ---
 

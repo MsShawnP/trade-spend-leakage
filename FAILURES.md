@@ -69,3 +69,31 @@ failed and may have its own entry below]
 **Status:** Open — fix required before U2.
 
 **Tags:** cinderhaven, postgres, sqlite, source_conn, pipeline, data-source, architecture
+
+---
+
+### 2026-05-31 — Preview screenshot tool times out with Plotly charts
+
+**Attempted:** Used `mcp__Claude_Preview__preview_screenshot` to verify the dashboard renders correctly after wiring live data and after U3.
+
+**Why it didn't work:** The preview tool has a 30-second rendering timeout. Plotly's JS bundle is large enough that mounting a full chart (Scatter traces + layout) exceeds 30s in the headless preview browser environment. The tool returns a timeout error; it is not an app bug.
+
+**What we tried instead:** Verified layout via `curl http://127.0.0.1:<port>/_dash-layout | python` — inspects the full component tree and figure data as JSON. Confirmed component IDs, trace counts, callback wiring, and data values without a browser. Reliable and fast. Use this pattern for all Plotly dashboard verification going forward.
+
+**Status:** Resolved (workaround established).
+
+**Tags:** plotly, preview, screenshot, dash, verification, timeout
+
+---
+
+### 2026-05-31 — Wrote pipeline SQL before querying Postgres schema; caught multiple column/schema bugs at verification
+
+**Attempted:** Wrote `pipeline/move1_net_revenue.py` SQL referencing `scan_data`, `stores`, `sku_costs` (bare table names) and `stores.retailer` (column name from SQLite diagnostic), assuming the Postgres schema matched the SQLite snapshot.
+
+**Why it didn't work:** Postgres tables are in the `raw` schema (requires `raw.scan_data` etc.). The `stores` table uses `chain_name`, not `retailer`. UNFI, KeHE, and DTC are not retail chains in the `stores` table (they appear in `sku_costs` rate columns but are distributor/DTC channels). The same issue recurred in U3 planning — the `is_double_dip` flag exists in the SQLite snapshot but not in Postgres.
+
+**What we tried instead:** Added a schema exploration step before writing U3 SQL — queried `information_schema.columns`, `DISTINCT` values, and row counts for all source tables before writing any query. Caught column names, ID formats (`RET-WALMART` not `walmart`), and missing flags up front.
+
+**Status:** Resolved. Rule going forward: always query live schema before writing pipeline SQL against a new source table.
+
+**Tags:** postgres, schema, sql, column-names, raw-schema, pipeline, move1, move3
