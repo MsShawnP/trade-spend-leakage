@@ -158,6 +158,18 @@ Phase 1 — run /clarify next.
 
 ---
 
+## 2026-05-31 16:30 — Wrap: U6 complete, all 5 moves functional
+
+**Started from:** U5 committed, PLAN.md not yet updated. U6 (Move 5 Accrual Reconciliation) was the next task.
+
+**Did:** Marked U5 complete in PLAN.md. Implemented U6 full vertical slice — `pipeline/move5_accrual.py` (two Postgres CTEs: monthly accrued via rate card × scan revenue, monthly actual via retailer_deductions; merge + variance), `get_accrual()` db reader, `accrual_chart()` (grouped bars + secondary-y variance line), `_section_accrual()` in layout. Ran pipeline against Fly.io Postgres — 12 months, +$2.4M net variance. Pushed and tagged `v0.5-all-moves`.
+
+**State:** All 5 analytical moves functional. Five sections render in dashboard. results_accrual has 12 rows. App imports and serves cleanly. No workbook (U7) or deployment (U8) yet. Fly proxy must be running for pipeline.
+
+**Next:** `/ce:work` U7 — Excel workbook generation + download button. Start with `workbook/styles.py` (copy from trade-spend-data-diagnostic verbatim), then `workbook/generator.py`, then one tab at a time. Wire `dcc.Download` callback last.
+
+---
+
 ## 2026-05-31 16:25 — U6 complete: Move 5 Accrual Reconciliation
 
 **What changed:** U6 shipped — Move 5 Accrual Reconciliation pipeline + grouped bar chart + variance line

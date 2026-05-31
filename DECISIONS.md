@@ -83,6 +83,11 @@ Each entry:
 - **Scope:** All data used in this project
 - **Do not:** Use real brand data.
 
+### 2026-05-31 — Pipeline moves use separate queries + Python merge, not single JOIN
+- **Why:** Easier to debug each data source independently; avoids complex multi-source CTEs. Consistent with the pattern established in move2_efficiency (one Postgres query + one SQLite read merged via pandas). Each query can be run and inspected in isolation, and merge logic is visible as ordinary DataFrame code.
+- **Scope:** All pipeline move modules that draw from multiple source tables (U5–U6 and any future moves).
+- **Do not:** Combine accrued and actual deduction logic (or any other multi-source aggregation) into a single Postgres CTE or JOIN. Debug isolation is worth the extra round-trip.
+
 ### 2026-05-31 — Use `/_dash-layout` JSON to verify dashboard, not preview screenshot
 - **Why:** Preview screenshot tool times out (30s) with Plotly's JS bundle. `/_dash-layout` returns the full component tree and figure data as JSON — verifies component IDs, trace counts, callback wiring, and data values reliably and instantly.
 - **Scope:** All dashboard verification for this project (U4–U8).

@@ -111,3 +111,17 @@ failed and may have its own entry below]
 **Status:** Resolved.
 
 **Tags:** postgres, promotions, retailer_id, slug-format, RET-format, move2, pipeline, schema
+
+---
+
+### 2026-05-31 — charts.py edit duplicated a function by targeting the wrong insertion point
+
+**Attempted:** Used Edit to insert `accrual_chart()` before `_apply_promo_roi_layout` in `charts.py`. The old_string matched the function *signature line*, but the function body immediately followed — so the edit inserted new code before the signature, then the original body was still there, producing two complete definitions of `_apply_promo_roi_layout` plus a junk sentinel variable.
+
+**Why it didn't work:** The Edit tool replaces old_string with new_string verbatim. When the target string is the function signature only (not including its body), the result inserts before the signature and leaves the original body intact — effectively duplicating the function.
+
+**What we tried instead:** Read the file to inspect the actual line range, then targeted the junk sentinel + duplicate function body as old_string and replaced with just the new `accrual_chart()` function. Removed duplicate cleanly in one edit.
+
+**Status:** Resolved.
+
+**Tags:** charts, edit-tool, duplication, insertion-point, charts.py
