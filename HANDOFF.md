@@ -158,6 +158,18 @@ Phase 1 — run /clarify next.
 
 ---
 
+## 2026-05-31 16:25 — U6 complete: Move 5 Accrual Reconciliation
+
+**What changed:** U6 shipped — Move 5 Accrual Reconciliation pipeline + grouped bar chart + variance line
+
+**Why:** Fifth and final analytical move. Monthly accrued (rate card × scan revenue) vs actual deducted (retailer_deductions) — the $2.4M net positive variance is the punchline for this move.
+
+**State:** All five analytical moves functional (Moves 1–5). Five sections render in the dashboard. `python pipeline/run.py --moves 5` writes 12 rows to results_accrual. App imports and serves cleanly. No workbook or deployment yet (U7–U8). Fly proxy must be running for pipeline.
+
+**Next:** `/ce:work` U7 — Excel workbook generation + download button. Read U7 spec in plan; adapt `trade-spend-data-diagnostic/workbook/` modules to read from results.db.
+
+---
+
 ## 2026-05-31 17:30
 
 **What changed:** U5 shipped — Move 4 Promotional ROI scatter chart + rolling-median baseline pipeline
