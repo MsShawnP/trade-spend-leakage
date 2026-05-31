@@ -205,3 +205,15 @@ Phase 1 — run /clarify next.
 **Next:** `/ce:work` U8 — Dockerfile + fly.toml + run.py entry point. Follow `retail-velocity-decision-tool/Dockerfile` pattern. Bake results.db into the image during build (pipeline runs at build time, no live DB at runtime).
 
 ---
+
+## 2026-05-31 21:15 — Wrap: U7 complete
+
+**Started from:** U6 complete, all 5 analytical moves functional (`v0.5-all-moves`). U7 (workbook) was next.
+
+**Did:** Built full `workbook/` package — `styles.py`, `generator.py` (returns bytes via BytesIO), and six tab modules each reading from `results.db`. Wired "Download Workbook" button + `dcc.Download` callback. 5 new tests (18 total offline pass). Fixed missing `ALIGN_LEFT` import caught by tests.
+
+**State:** U7 complete and committed. App imports clean. 18/18 offline tests pass. U8 (Fly.io deployment) is the only remaining unit. Phase 2 definition of done is one deploy away.
+
+**Next:** `/ce:work` U8 — `Dockerfile` + `fly.toml` + `run.py`. Follow `retail-velocity-decision-tool/Dockerfile` exactly. Bake `results.db` into the image at build time (no live DB at runtime). `internal_port = 8050`, always-on service. Read the reference Dockerfile before writing.
+
+---

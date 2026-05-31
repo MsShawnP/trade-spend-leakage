@@ -114,6 +114,20 @@ failed and may have its own entry below]
 
 ---
 
+### 2026-05-31 — Missing import caught by tests: ALIGN_LEFT not in tab_net_revenue.py import block
+
+**Attempted:** Wrote `workbook/tab_net_revenue.py` end-to-end in one pass. The last line used `ALIGN_LEFT` (for the footnote cell alignment) but `ALIGN_LEFT` was never added to the `from workbook.styles import (...)` block at the top of the file.
+
+**Why it didn't work:** The file was written top-to-bottom without a final scan of the imports list before closing. `ALIGN_LEFT` was used in other tab modules but the import was accidentally omitted here. The `NameError` only surfaces at call time, not at import time, so `from workbook.generator import generate_workbook` succeeded but `generate_workbook()` raised on the first call.
+
+**What we tried instead:** Tests caught it immediately on the first `pytest` run. Fix: added `ALIGN_LEFT` to the import block in one edit. 
+
+**Status:** Resolved.
+
+**Tags:** workbook, imports, NameError, openpyxl, tab_net_revenue
+
+---
+
 ### 2026-05-31 — charts.py edit duplicated a function by targeting the wrong insertion point
 
 **Attempted:** Used Edit to insert `accrual_chart()` before `_apply_promo_roi_layout` in `charts.py`. The old_string matched the function *signature line*, but the function body immediately followed — so the edit inserted new code before the signature, then the original body was still there, producing two complete definitions of `_apply_promo_roi_layout` plus a junk sentinel variable.

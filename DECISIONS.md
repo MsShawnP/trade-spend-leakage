@@ -106,7 +106,10 @@ Each entry:
 
 ## Output Formats
 
-[Decisions about deliverable formats, structure, organization]
+### 2026-05-31 — Each workbook tab handles its own missing-data state
+- **Why:** `generate_workbook()` iterates over all six tab builders regardless of which pipeline moves have run. Centralising a guard in the generator would require it to know which tables each tab needs — coupling that belongs in the tab. Each tab's `_read()` catches `Exception` on the SQLite query and returns `None`; the `build_*()` function writes a placeholder row. This keeps partial-build-state behaviour (only Move 1 populated → only Net Revenue sheet has real data) without generator logic.
+- **Scope:** All `workbook/tab_*.py` modules.
+- **Do not:** Add table-existence checks or try/except guards to `generator.py`. The guard lives in the tab, not the orchestrator.
 
 ---
 
