@@ -50,6 +50,18 @@ Phase 1 — run /clarify next.
 
 ---
 
+## 2026-05-31 14:36
+
+**What changed:** U1.5 shipped — source_conn() switched from SQLite snapshot to Fly.io Postgres via DATABASE_URL (psycopg2)
+
+**Why:** SQLite approach in U1 was a placeholder; Postgres is the only SSOT. Must be wired before any move pipeline logic is written against it.
+
+**State:** `pipeline/db.py` source_conn() requires DATABASE_URL env var. results_conn() unchanged (SQLite). 3 tests pass, 1 live Postgres test skips when DATABASE_URL absent. No move modules yet.
+
+**Next:** Set DATABASE_URL to the Fly.io Postgres connection string, then `/ce:work` U2 — `pipeline/move1_net_revenue.py` + bump chart layout/charts/callbacks.
+
+---
+
 ## 2026-05-31 23:45 — Wrap: U1 complete, Phase 2 underway
 
 **Started from:** All Heavy-tier planning done, no code written.
