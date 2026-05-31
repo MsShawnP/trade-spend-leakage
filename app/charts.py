@@ -455,3 +455,151 @@ def efficiency_chart(df: pd.DataFrame) -> go.Figure:
         )
 
     return fig
+
+
+# ---------------------------------------------------------------------------
+# Promotional ROI scatter chart (Move 4)
+# ---------------------------------------------------------------------------
+
+def promo_roi_chart(df: pd.DataFrame, pinned: str | None = None) -> go.Figure:
+    """Scatter chart — promo cost (x) vs incremental revenue (y).
+
+    Break-even line: y = x (dashed REFERENCE gray).
+    Points above line: HK teal (ROI positive).
+    Points below line: Tokyo rose (money-losing).
+    Points with insufficient baseline: DISABLED gray.
+    Pinned promo highlights; others dim to 0.2 opacity.
+    """
+    fig = go.Figure()
+
+    if df.empty:
+        _add_breakeven_line(fig, 0, 1)
+        _apply_promo_roi_layout(fig)
+        return fig
+
+    # Determine axis range for break-even line
+    all_costs = df["promo_cost"].dropna()
+    all_incr = df["incremental_revenue"].dropna()
+    axis_max = float(max(
+        all_costs.max() if not all_costs.empty else 1000,
+        all_incr.max() if not all_incr.empty else 1000,
+    )) * 1.1
+    axis_max = max(axis_max, 100.0)
+
+    # Break-even line first (renders behind points)
+    _add_breakeven_line(fig, 0, axis_max)
+
+    # One trace per point — allows individual opacity control
+    for _, row in df.iterrows():
+        pid = str(row["promo_id"])
+        has_baseline = bool(row.get("has_sufficient_baseline", 0))
+        cost = row.get("promo_cost")
+        incr = row.get("incremental_revenue")
+        is_losing = row.get("is_money_losing")
+        promo_type = str(row.get("promo_type") or "")
+        retailer = str(row.get("retailer") or "")
+        sku = str(row.get("sku_id") or "")
+
+        if not has_baseline or cost is None or pd.isna(cost):
+            color = DISABLED
+        elif is_losing == 1 or is_losing is True:
+            color = TOKYO_DEFAULT
+        else:
+            color = HK_DEFAULT
+
+        is_pinned = pinned is not None and pid == pinned
+        opacity = 1.0 if (pinned is None or is_pinned) else 0.2
+        size = 12 if is_pinned else 9
+        line_width = 2 if is_pinned else 0
+
+        # Hover text
+        if has_baseline and cost is not None and pd.notna(cost) and incr is not None and pd.notna(incr):
+            roi_pct = ((float(incr) - float(cost)) / float(cost) * 100) if float(cost) != 0 else None
+            hover = (
+                f"<b>{pid}</b><br>"
+                f"Retailer: {retailer}<br>"
+                f"SKU: {sku}<br>"
+                f"Type: {promo_type}<br>"
+                f"Cost: ${float(cost):,.0f}<br>"
+                f"Incremental rev: ${float(incr):,.0f}<br>"
+                + (f"ROI: {roi_pct:+.1f}%" if roi_pct is not None else "ROI: N/A")
+                + "<extra></extra>"
+            )
+        else:
+            cost_str = f"${float(cost):,.0f}" if cost is not None and pd.notna(cost) else "N/A"
+            hover = (
+                f"<b>{pid}</b><br>"
+                f"Retailer: {retailer}<br>"
+                f"SKU: {sku}<br>"
+                f"Type: {promo_type}<br>"
+                f"Cost: {cost_str}<br>"
+                "Insufficient pre-promo data<extra></extra>"
+            )
+
+        x_val = float(cost) if cost is not None and pd.notna(cost) else None
+        y_val = float(incr) if incr is not None and pd.notna(incr) else None
+
+        fig.add_trace(go.Scatter(
+            x=[x_val],
+            y=[y_val],
+            mode="markers",
+            name=pid,
+            showlegend=False,
+            marker=dict(
+                color=color,
+                size=size,
+                opacity=opacity,
+                line=dict(color=INK, width=line_width),
+            ),
+            customdata=[[pid, retailer, sku, promo_type]],
+            hovertemplate=hover,
+        ))
+
+    _apply_promo_roi_layout(fig, axis_max)
+    return fig
+
+
+def _add_breakeven_line(fig: go.Figure, lo: float, hi: float) -> None:
+    fig.add_trace(go.Scatter(
+        x=[lo, hi],
+        y=[lo, hi],
+        mode="lines",
+        name="Break-even",
+        showlegend=False,
+        line=dict(color=REFERENCE, dash="dash", width=1.5),
+        hoverinfo="skip",
+    ))
+
+
+def _apply_promo_roi_layout(fig: go.Figure, axis_max: float = 1.0) -> None:
+    fig.update_layout(
+        template="simple_white",
+        paper_bgcolor=CANVAS,
+        plot_bgcolor=CANVAS,
+        height=460,
+        margin=dict(l=60, r=20, t=20, b=60),
+        font=dict(family=FONT_SANS, size=12, color=INK),
+        hoverlabel=dict(bgcolor=CANVAS, font_family=FONT_SANS),
+        showlegend=False,
+        xaxis=dict(
+            title=dict(
+                text="Promotion cost ($)",
+                font=dict(family=FONT_SANS, size=13, color=TEXT_SECONDARY),
+            ),
+            tickprefix="$",
+            tickfont=dict(family=FONT_SANS, size=11, color=TEXT_SECONDARY),
+            gridcolor=GRIDLINE,
+            zeroline=False,
+            range=[0, axis_max],
+        ),
+        yaxis=dict(
+            title=dict(
+                text="Incremental revenue ($)",
+                font=dict(family=FONT_SANS, size=13, color=TEXT_SECONDARY),
+            ),
+            tickprefix="$",
+            tickfont=dict(family=FONT_SANS, size=11, color=TEXT_SECONDARY),
+            gridcolor=GRIDLINE,
+            zeroline=False,
+        ),
+    )

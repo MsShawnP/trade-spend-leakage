@@ -72,6 +72,26 @@ def get_trade_efficiency() -> pd.DataFrame:
         conn.close()
 
 
+def get_promo_roi() -> pd.DataFrame:
+    """Return results_promo_roi as a DataFrame (75 rows, one per promo event)."""
+    conn = _connect()
+    try:
+        return pd.read_sql_query(
+            "SELECT * FROM results_promo_roi ORDER BY promo_cost DESC",
+            conn,
+        )
+    except Exception:
+        return pd.DataFrame(columns=[
+            "promo_id", "sku_id", "retailer_id", "retailer",
+            "start_week", "end_week", "promo_cost", "promo_type",
+            "has_sufficient_baseline", "baseline_weekly_revenue",
+            "promo_revenue", "promo_weeks", "incremental_revenue",
+            "incremental_margin", "is_money_losing",
+        ])
+    finally:
+        conn.close()
+
+
 def get_leakage_instances(leakage_type: str | None = None) -> pd.DataFrame:
     """Return results_leakage_instances, optionally filtered by leakage_type."""
     conn = _connect()

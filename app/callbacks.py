@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from dash import ALL, Input, Output, State, ctx
 
-from app.charts import bump_chart, leakage_ledger, leakage_instances_grid
-from app.components import callout_card
-from app.db import get_net_revenue, get_leakage_summary, get_leakage_instances
+from app.charts import bump_chart, leakage_ledger, leakage_instances_grid, promo_roi_chart
+from app.components import callout_card, promo_callout_card
+from app.db import get_net_revenue, get_leakage_summary, get_leakage_instances, get_promo_roi
 
 
 def register_callbacks(app) -> None:
@@ -98,3 +98,48 @@ def register_callbacks(app) -> None:
 
         grid = leakage_instances_grid(df_instances)
         return ledger, grid
+
+    # ----------------------------------------------------------
+    # e) Promo ROI chart click → update promo pin store
+    #    Second click on same point clears the pin.
+    # ----------------------------------------------------------
+    @app.callback(
+        Output("promo-roi-pin-store", "data"),
+        Input("promo-roi-chart", "clickData"),
+        State("promo-roi-pin-store", "data"),
+        prevent_initial_call=True,
+    )
+    def update_promo_pin(click_data, current_pin):
+        if not click_data:
+            return None
+        point = click_data["points"][0]
+        custom = point.get("customdata")
+        if not custom or not custom[0]:
+            return None
+        promo_id = str(custom[0][0]) if isinstance(custom[0], list) else str(custom[0])
+        if promo_id == current_pin:
+            return None
+        return promo_id
+
+    # ----------------------------------------------------------
+    # f) Promo pin store → update scatter opacity + callout card
+    # ----------------------------------------------------------
+    @app.callback(
+        Output("promo-roi-chart", "figure"),
+        Output("promo-roi-callout", "style"),
+        Output("promo-roi-callout", "children"),
+        Input("promo-roi-pin-store", "data"),
+    )
+    def update_promo_display(pinned_promo):
+        df = get_promo_roi()
+        fig = promo_roi_chart(df, pinned=pinned_promo)
+
+        if not pinned_promo:
+            return fig, {"display": "none"}, []
+
+        matches = df[df["promo_id"].astype(str) == str(pinned_promo)]
+        if matches.empty:
+            return fig, {"display": "none"}, []
+
+        card = promo_callout_card(matches.iloc[0])
+        return fig, {"display": "block"}, card

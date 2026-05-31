@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 from dash import dcc, html
 
-from app.charts import bump_chart, efficiency_chart, leakage_ledger
+from app.charts import bump_chart, efficiency_chart, leakage_ledger, promo_roi_chart
 from app.components import footnote
 from app.constants import (
     APP_SUBTITLE,
@@ -22,7 +22,7 @@ from app.constants import (
     TEXT_PRIMARY,
     TEXT_SECONDARY,
 )
-from app.db import get_net_revenue, get_leakage_summary, get_trade_efficiency
+from app.db import get_net_revenue, get_leakage_summary, get_trade_efficiency, get_promo_roi
 
 
 # ---------------------------------------------------------------------------
@@ -247,6 +247,78 @@ def _section_leakage(df_summary: pd.DataFrame) -> html.Div:
 
 
 # ---------------------------------------------------------------------------
+# Move 4 — Promotional ROI
+# ---------------------------------------------------------------------------
+
+def _section_promo_roi(df: pd.DataFrame) -> html.Div:
+    fig = promo_roi_chart(df) if not df.empty else None
+
+    chart_content: list = []
+    if fig is not None:
+        chart_content.extend([
+            # Pinned callout card (hidden until a point is clicked)
+            html.Div(id="promo-roi-callout", style={"display": "none"}),
+            dcc.Graph(
+                id="promo-roi-chart",
+                figure=fig,
+                config={"displayModeBar": False},
+            ),
+        ])
+    else:
+        chart_content.append(html.P(
+            "No promo ROI data — run the pipeline first: python pipeline/run.py --moves 4",
+            style={"fontFamily": FONT_SANS, "fontSize": "14px", "color": TEXT_SECONDARY},
+        ))
+
+    measurable = int(df["has_sufficient_baseline"].sum()) if not df.empty else 0
+    total = len(df) if not df.empty else 0
+
+    return html.Div([
+        html.Div([
+            html.Span("04", style={
+                "fontFamily": FONT_SANS,
+                "fontSize": "12px",
+                "fontWeight": "500",
+                "color": RED,
+                "letterSpacing": "0.06em",
+                "marginRight": "10px",
+            }),
+            html.Span("Promotional ROI", style={
+                "fontFamily": FONT_SERIF,
+                "fontSize": "22px",
+                "fontWeight": "700",
+                "color": INK,
+            }),
+        ], style={"marginBottom": "10px"}),
+
+        html.P(
+            "Promotions above the break-even line returned more in scan revenue "
+            "than they cost. Promotions below the line lost money — candidates "
+            "for reallocation into higher-performing events. Click a point to see "
+            "the detail.",
+            style={
+                "fontFamily": FONT_SANS,
+                "fontSize": "17px",
+                "color": TEXT_PRIMARY,
+                "lineHeight": "1.6",
+                "maxWidth": "660px",
+                "marginBottom": "20px",
+            },
+        ),
+
+        *chart_content,
+
+        footnote(
+            f"Baseline estimated from 8-week rolling median of weekly scan revenue "
+            f"for the promoted SKU × retailer. {measurable} of {total} promotions "
+            f"have sufficient pre-promotion data. Incremental revenue = promo-period "
+            f"scan revenue minus expected baseline. Break-even line: promo cost = "
+            f"incremental revenue. Gray points lack sufficient baseline data."
+        ),
+    ], id="section-promo-roi", style={"marginBottom": SECTION_GAP})
+
+
+# ---------------------------------------------------------------------------
 # Public entry point
 # ---------------------------------------------------------------------------
 
@@ -263,6 +335,13 @@ def create_layout() -> html.Div:
     _EMPTY_LEAKAGE = pd.DataFrame(columns=[
         "leakage_type", "display_name", "dollar_total", "instance_count", "classification",
     ])
+    _EMPTY_PROMO_ROI = pd.DataFrame(columns=[
+        "promo_id", "sku_id", "retailer_id", "retailer",
+        "start_week", "end_week", "promo_cost", "promo_type",
+        "has_sufficient_baseline", "baseline_weekly_revenue",
+        "promo_revenue", "promo_weeks", "incremental_revenue",
+        "incremental_margin", "is_money_losing",
+    ])
 
     try:
         df_net = get_net_revenue()
@@ -277,14 +356,20 @@ def create_layout() -> html.Div:
     if df_leakage.empty:
         df_leakage = _EMPTY_LEAKAGE
 
+    df_promo_roi = get_promo_roi()
+    if df_promo_roi.empty:
+        df_promo_roi = _EMPTY_PROMO_ROI
+
     return html.Div([
         dcc.Store(id="bump-pin-store", data=None),
         dcc.Store(id="leakage-pin-store", data=None),
+        dcc.Store(id="promo-roi-pin-store", data=None),
         html.Div([
             _brand_header(),
             _section_net_revenue(df_net),
             _section_efficiency(df_efficiency),
             _section_leakage(df_leakage),
+            _section_promo_roi(df_promo_roi),
         ], style={
             "maxWidth": CONTENT_MAX_WIDTH,
             "margin": "0 auto",

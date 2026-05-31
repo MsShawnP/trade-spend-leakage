@@ -68,6 +68,55 @@ def callout_card(row: pd.Series) -> html.Div:
     })
 
 
+def promo_callout_card(row: pd.Series) -> html.Div:
+    """Dark pinned callout card showing one promotion's ROI breakdown."""
+    cost_str = f"${float(row['promo_cost']):,.0f}" if pd.notna(row.get("promo_cost")) else "N/A"
+    has_baseline = bool(row.get("has_sufficient_baseline", 0))
+
+    if has_baseline and pd.notna(row.get("incremental_revenue")):
+        incr = float(row["incremental_revenue"])
+        cost = float(row["promo_cost"]) if pd.notna(row.get("promo_cost")) else None
+        incr_str = f"${incr:,.0f}"
+        roi_str = (
+            f"{((incr - cost) / cost * 100):+.1f}%"
+            if cost and cost != 0
+            else "N/A"
+        )
+    else:
+        incr_str = "Insufficient data"
+        roi_str = "N/A"
+
+    heading = f"{row['promo_id']}"
+    sub = f"{row.get('sku_id', '')}  ·  {row.get('retailer', '')}  ·  {row.get('promo_type', '')}"
+
+    return html.Div([
+        html.Div(heading, style={
+            "color": CARD_TEXT,
+            "fontFamily": FONT_SERIF,
+            "fontSize": "18px",
+            "fontWeight": "700",
+            "marginBottom": "4px",
+        }),
+        html.Div(sub, style={
+            "color": CARD_SUBTITLE,
+            "fontFamily": FONT_SANS,
+            "fontSize": "13px",
+            "marginBottom": "14px",
+        }),
+        html.Div([
+            _card_stat("Promo Cost", cost_str),
+            _card_stat("Incremental Rev", incr_str),
+            _card_stat("ROI", roi_str),
+        ], style={"display": "flex", "gap": "32px", "flexWrap": "wrap"}),
+    ], style={
+        "background": CARD_BG,
+        "padding": "20px 24px",
+        "borderRadius": "2px",
+        "border": f"1px solid {CARD_BORDER}",
+        "marginBottom": "12px",
+    })
+
+
 def footnote(text: str) -> html.P:
     """Small italic footnote below a chart section."""
     return html.P(text, style={
