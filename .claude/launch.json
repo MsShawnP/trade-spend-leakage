@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "trade-spend-dashboard",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["app/app.py"],
+      "port": 8050,
+      "autoPort": true
+    }
+  ]
+}

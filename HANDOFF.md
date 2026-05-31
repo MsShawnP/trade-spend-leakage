@@ -97,3 +97,15 @@ Phase 1 — run /clarify next.
 **Next:** Before U2 — switch `pipeline/db.py` `source_conn()` from SQLite snapshot to Postgres (cinderhaven-data-platform on Fly.io via `DATABASE_URL`). The SQLite approach in U1 is a placeholder; the Cinderhaven Data Platform Postgres is the only SSOT. Once source_conn() is wired to Postgres, proceed with U2: `pipeline/move1_net_revenue.py` + `app/db.py` + `app/layout.py` + `app/charts.py` (`bump_chart()`) + `app/callbacks.py` (click-to-pin).
 
 ---
+
+## 2026-05-31 15:12
+
+**What changed:** U2 verified against live Postgres data — 6 retailers populate the bump chart correctly.
+
+**Why:** Two SQL bugs were blocking live data: bare table names needed `raw.` schema prefix, and `stores.retailer` doesn't exist (column is `chain_name`). Also fixed Decimal→float casting for SQLite write, and sys.path for `python app/app.py` launch mode.
+
+**State:** `pipeline/run.py --moves 1` populates `results_net_revenue` with 6 retailers. App serves full layout with 6 populated chart traces. `.env` with Fly proxy DATABASE_URL is in place (gitignored). Proxy must be running (`fly proxy 5432 -a cinderhaven-db`) for pipeline to execute.
+
+**Next:** `/ce:work` U3 — Move 3 leakage detection ledger + AG Grid expand.
+
+---

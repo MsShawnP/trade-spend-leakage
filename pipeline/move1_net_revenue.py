@@ -21,7 +21,7 @@ WITH trailing_bounds AS (
     SELECT MIN(week_ending) AS oldest_week
     FROM (
         SELECT DISTINCT week_ending
-        FROM scan_data
+        FROM raw.scan_data
         ORDER BY week_ending DESC
         LIMIT 52
     ) t
@@ -31,20 +31,18 @@ channel_rates AS (
         AVG(trade_spend_pct_walmart)     AS rate_walmart,
         AVG(trade_spend_pct_costco)      AS rate_costco,
         AVG(trade_spend_pct_whole_foods) AS rate_whole_foods,
-        AVG(trade_spend_pct_unfi)        AS rate_unfi,
-        AVG(trade_spend_pct_dtc)         AS rate_dtc,
-        AVG(trade_spend_pct_kehe)        AS rate_kehe,
+        AVG(trade_spend_pct_sprouts)     AS rate_sprouts,
         AVG(trade_spend_pct_regional)    AS rate_regional
-    FROM sku_costs
+    FROM raw.sku_costs
 ),
 revenue_by_retailer AS (
     SELECT
-        st.retailer,
+        st.chain_name AS retailer,
         SUM(sd.dollars_sold) AS gross_revenue
-    FROM scan_data sd
-    JOIN stores st ON sd.store_id = st.store_id
+    FROM raw.scan_data sd
+    JOIN raw.stores st ON sd.store_id = st.store_id
     WHERE sd.week_ending >= (SELECT oldest_week FROM trailing_bounds)
-    GROUP BY st.retailer
+    GROUP BY st.chain_name
 ),
 with_rate AS (
     SELECT
@@ -54,9 +52,7 @@ with_rate AS (
             WHEN 'Walmart'     THEN cr.rate_walmart
             WHEN 'Costco'      THEN cr.rate_costco
             WHEN 'Whole Foods' THEN cr.rate_whole_foods
-            WHEN 'UNFI'        THEN cr.rate_unfi
-            WHEN 'DTC'         THEN cr.rate_dtc
-            WHEN 'KeHE'        THEN cr.rate_kehe
+            WHEN 'Sprouts'     THEN cr.rate_sprouts
             ELSE cr.rate_regional
         END AS trade_rate
     FROM revenue_by_retailer r
@@ -90,6 +86,10 @@ def run() -> None:
     """Execute Move 1 and write results_net_revenue to results.db."""
     with source_conn() as conn:
         df = compute_net_revenue(conn)
+
+    numeric_cols = ["gross_revenue", "trade_spend", "net_revenue", "net_to_gross_ratio"]
+    for col in numeric_cols:
+        df[col] = df[col].astype(float)
 
     with results_conn() as conn:
         df.to_sql("results_net_revenue", conn, if_exists="replace", index=False)
