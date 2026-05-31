@@ -72,11 +72,11 @@ Trade spend opacity costs specialty food brands real money — the brief and the
 ### Institutional Learnings
 
 - **Schema details confirmed** (from `trade-spend-data-diagnostic/HANDOFF.md`): `scan_data` uses `week_ending` (not `week_start`), revenue = `dollars_sold`, not `units × price`. `sku_costs` has per-channel columns (`trade_spend_pct_walmart`, `trade_spend_pct_costco`, `trade_spend_pct_whole_foods`, `trade_spend_pct_unfi`, `trade_spend_pct_dtc`, `trade_spend_pct_kehe`, `trade_spend_pct_regional`). `deductions.retailer_id` uses slugs (`walmart`, `costco`, etc.).
-- **Actual data numbers** (from `TRADE_SPEND_VERIFICATION.md`, trailing 52 weeks): Revenue ~$25.6M, implied trade spend ~$4.4M (17.3%), double-dips 3 instances $19,306, ghost promos 137 instances ~$96K, trailing-365 deductions $1.2M. These are the numbers the dashboard will show.
+- **Actual data numbers** (from live Fly.io Postgres, verified 2026-05-31): double-dips 173 instances $15,264, ghost promos 817 instances $75,781, rate discrepancies 1 instance $395, unauthorized 1,521 instances $144,320. Total leakage: $235,760. Postgres dataset is ~4.5× larger than the SQLite snapshot in `TRADE_SPEND_VERIFICATION.md` — Postgres is SSOT per CLAUDE.md.
 - **SQLite architecture** (from `trade-spend-data-diagnostic/DECISIONS.md`): Live Postgres connection is fragile on Windows (password management, flyctl proxy). Export to SQLite once; projects consume the SQLite file. Reconcilability to Postgres SSOT is maintained by the export chain: `flyctl postgres connect -a cinderhaven-db` → SQLite. All downstream projects use the same submodule.
 - **Bump chart approach** (deferred in requirements, resolved): Use Plotly `go.Scatter` with two x-positions (x=0 = gross rank, x=1 = net rank). Each retailer is one trace, colored by Lailara categorical palette. Crossing lines emerge naturally from retailers where gross rank ≠ net rank. Rank 1 at top (y-axis inverted or rank=1 plotted at largest y-value).
-- **Double-dip detection** (from `TRADE_SPEND_VERIFICATION.md`): The `deductions` table has an `is_double_dip` flag already. Double-dip deductions have `order_id = NULL` — they were seeded as billing-level deductions. Three confirmed instances.
-- **Ghost promo detection** (from `sql/INVENTORY.md` query #14): LEFT JOIN promotions ON `retailer_id` + date window match; `promo_billback` deductions with no matching promotion = ghost promo. 137 instances confirmed.
+- **Double-dip detection** (verified against Postgres 2026-05-31): No `is_double_dip` flag in Postgres. Detection: `promo_billback` deductions matched to a promotion with `funding_mechanism = 'off_invoice'` by `retailer_id + (start_week to end_week + 14 days)`; deduplicated on `deduction_id`. 173 instances / $15,264.
+- **Ghost promo detection** (adapted from `sql/INVENTORY.md` query #14): `promo_billback` deductions with no matching promotion (any funding_mechanism) within ±14 day window. 817 instances / $75,781.
 
 ### External References
 
@@ -91,7 +91,7 @@ Trade spend opacity costs specialty food brands real money — the brief and the
 - **Reuse `trade-spend-data-diagnostic` query and workbook logic**: Do not rewrite what already works. Copy/adapt the relevant modules; own them in this repo. Avoids cross-repo import coupling while avoiding duplication.
 - **Adapt `promo_roi.py` from `retail-velocity-decision-tool`**: Rolling-median baseline is already implemented there. Adapt for the pipeline layer rather than reimplementing.
 - **Bump chart via `go.Scatter`**: Two x-positions (gross rank at x=0, net rank at x=1), one trace per retailer, connected lines. Rank 1 plotted highest on y-axis (invert axis or map rank to descending y-value). Avoids external bump-chart libraries.
-- **Actual data numbers, not brief targets**: Brief's $340K double-dip / $180K phantom figures were aspirational. Dashboard shows actual Cinderhaven data. Story is still compelling: $19K recoverable double-dips + $96K ghost promos + 17.3% structural trade rate.
+- **Actual data numbers, not brief targets**: Brief's $340K double-dip / $180K phantom figures were aspirational. Dashboard shows actual Postgres data. Story is still compelling: $235K total leakage across 4 buckets against a 17.3% structural trade rate.
 - **Build in sales-impact order**: Move 1 → Move 3 → Move 2 → Move 4 → Move 5. Each is independently deployable. (see origin: R26, Key Decisions)
 
 ---
@@ -101,7 +101,7 @@ Trade spend opacity costs specialty food brands real money — the brief and the
 ### Resolved During Planning
 
 - **Cinderhaven schema**: Confirmed via `trade-spend-data-diagnostic` codebase. Key columns documented above in Institutional Learnings.
-- **Actual leakage numbers**: Verified from `TRADE_SPEND_VERIFICATION.md`. Double-dips: 3 / $19K. Ghost promos: 137 / ~$96K. These replace brief's aspirational targets.
+- **Actual leakage numbers**: Verified against live Postgres 2026-05-31. Double-dips: 173 / $15K. Ghost promos: 817 / $76K. Rate discrepancies: 1 / $395. Unauthorized: 1,521 / $144K. Total: $235,760. SQLite snapshot numbers in `TRADE_SPEND_VERIFICATION.md` are stale.
 - **Bump chart implementation**: `go.Scatter` with dual x-positions. No external library needed.
 - **`trade-spend-data-diagnostic` relationship**: Build on top — reuse queries and workbook modules. Own copies in this repo.
 - **SQLite vs Postgres**: SQLite snapshot via `cinderhaven-data` submodule, same pattern as `trade-spend-data-diagnostic`.
@@ -295,10 +295,10 @@ Build order (each U is independently deployable):
 
 **Approach:**
 - `pipeline/move3_leakage.py` computes four leakage sub-types:
-  1. **Double-dips**: `SELECT * FROM deductions WHERE is_double_dip = 1`. Three confirmed instances.
-  2. **Ghost promos (phantom)**: `promo_billback` deductions LEFT JOIN promotions on `retailer_id` + date window (`deduction_date BETWEEN start_date - 14 AND end_date + 14`); no matching promotion = ghost. Adapt query #14 from `trade-spend-data-diagnostic/sql/INVENTORY.md`.
-  3. **Rate discrepancies**: `promo_billback` deductions matched to a promotion (by retailer + date window) where `deduction_amount / order_revenue > promotion.discount_pct * 1.05` (5% tolerance). Note: may be zero instances in current data; write the query correctly and let the data speak.
-  4. **Unauthorized**: deductions with `deduction_type NOT IN ('promo_billback', 'short_ship', 'label_fine', 'spoilage', 'slotting', 'late_delivery', 'damaged', 'pallet_fine')` and no matching order — i.e., deduction types outside the known operational set.
+  1. **Double-dips**: `promo_billback` deductions matched (DISTINCT ON deduction_id) to a promotion with `funding_mechanism = 'off_invoice'` by retailer_id + (start_week to end_week + 14 days). No `is_double_dip` flag in Postgres. 173 instances / $15,264 (Postgres SSOT).
+  2. **Ghost promos (phantom)**: `promo_billback` deductions with no matching promotion (any funding_mechanism) within ±14 day window. 817 instances / $75,781.
+  3. **Rate discrepancies**: `promo_billback` matched to non-off_invoice promotion where `d.amount > p.promo_cost * 1.05`. 1 instance / $395.
+  4. **Unauthorized**: `deduction_type NOT IN` known operational set — currently `pricing_error` type. 1,521 instances / $144,320.
   Writes `results_leakage_summary` (one row per sub-type: type, dollar_total, instance_count, classification) and `results_leakage_instances` (one row per instance) to `results.db`.
 - Dashboard leakage ledger: A styled HTML table or `dash-ag-grid` with four rows (one per sub-type). Columns: type name, dollar total, instance count, classification (Recoverable / Reallocatable). Total row at bottom.
 - Click-to-expand: clicking a row stores the sub-type in `dcc.Store`; a callback renders the AG Grid instance table below the ledger with promotion identifier, period, agreed amount, actual deduction, variance, classification.
@@ -309,12 +309,12 @@ Build order (each U is independently deployable):
 - `trade-spend-data-diagnostic/sql/INVENTORY.md` query #9 (double-dip), #14 (ghost promos)
 - `retail-velocity-decision-tool` callbacks for click-to-expand pattern
 
-**Test scenarios:**
-- Happy path: `detect_double_dips(conn)` returns exactly 3 rows matching `is_double_dip = 1` flag.
-- Happy path: `detect_ghost_promos(conn)` returns 137 rows totaling ~$96K.
-- Edge case: `detect_rate_discrepancies(conn)` returns 0 rows — function handles empty result set without error.
-- Edge case: All four sub-type functions return DataFrames with consistent columns even when empty.
-- Integration: Covers AE2 — leakage ledger shows "Double-funded promotions — $19,306 — 3 instances — Recoverable"; clicking the row shows the AG Grid with 3 rows.
+**Test scenarios (updated for Postgres SSOT 2026-05-31):**
+- Happy path: `detect_double_dips(conn)` returns rows; all have leakage_type="double_funded" and classification="Recoverable".
+- Happy path: `detect_ghost_promos(conn)` returns rows; all have classification="Reallocatable" and null promo_id.
+- Edge case: `detect_rate_discrepancies(conn)` handles empty result set without error (1 row in current data).
+- Edge case: All four sub-type functions return DataFrames with consistent _INSTANCE_COLS even when empty.
+- Integration: Summary dollar totals match sum of instance actual_amounts per type.
 
 **Verification:**
 - `python pipeline/run.py --moves 3` populates `results_leakage_summary` and `results_leakage_instances`.
