@@ -112,3 +112,7 @@ CHANNEL_RATE_COLS = {
 
 APP_TITLE = "Trade Spend Leakage Analysis"
 APP_SUBTITLE = "Cinderhaven Provisions · Lailara LLC"
+
+# Typography
+FONT_SERIF = "'Playfair Display', Georgia, 'Times New Roman', serif"
+FONT_SANS = "'Source Sans 3', 'Source Sans Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif"
