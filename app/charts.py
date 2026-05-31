@@ -5,16 +5,21 @@ from __future__ import annotations
 import pandas as pd
 import plotly.graph_objects as go
 from dash import html
+from plotly.subplots import make_subplots
 
 from app.constants import (
     CANVAS,
     CATEGORICAL,
+    DISABLED,
     FONT_SANS,
     FONT_SERIF,
     GRIDLINE,
+    HK,
+    HK_DEFAULT,
     INK,
     NAVY,
     RED,
+    REFERENCE,
     TEXT_PRIMARY,
     TEXT_SECONDARY,
     TOKYO_DEFAULT,
@@ -271,3 +276,182 @@ def leakage_instances_grid(df: pd.DataFrame) -> "dash_ag_grid.AgGrid":
         style={"height": None},
         className="ag-theme-alpine",
     )
+
+
+# ---------------------------------------------------------------------------
+# Trade Spend Efficiency — dual-panel horizontal bar chart
+# ---------------------------------------------------------------------------
+
+# Threshold for "high" trade spend — specialty food structural average
+_HIGH_TRADE_SPEND_PCT = 0.17
+
+
+def efficiency_chart(df: pd.DataFrame) -> go.Figure:
+    """Two-panel horizontal bar chart for Move 2 trade spend efficiency.
+
+    Left panel: Trade spend as % of gross revenue.
+      Bars colored SG orange when above the 17% specialty food average,
+      HK teal when at or below it.
+
+    Right panel: Revenue per promo dollar (promo-period scan revenue ÷ total
+      promo cost). Bars colored on HK teal scale; DISABLED gray for retailers
+      with no measurable promo data.
+
+    Retailers sorted by ascending trade_spend_pct (most efficient at top).
+    """
+    df = df.copy().sort_values("trade_spend_pct", ascending=True)
+    retailers = df["retailer"].tolist()
+    n = len(retailers)
+
+    # --- Left panel colors: HK teal gradient (darkest = lowest % = most efficient)
+    # Fall back to SG orange for any retailer above the specialty food average.
+    trade_pcts = [float(row["trade_spend_pct"]) for _, row in df.iterrows()]
+    tsp_min = min(trade_pcts) if trade_pcts else 0
+    tsp_max = max(trade_pcts) if trade_pcts else 1
+
+    def _trade_color(pct: float) -> str:
+        if pct > _HIGH_TRADE_SPEND_PCT:
+            return SG_DEFAULT
+        if tsp_max == tsp_min:
+            return HK_DEFAULT
+        # Lower % → darker teal (more efficient)
+        normalized = (pct - tsp_min) / (tsp_max - tsp_min)  # 0 = best, 1 = worst
+        stops = [HK[5], HK[15], HK[25], HK[35], HK[55], HK[70], HK[85]]
+        idx = min(int(normalized * len(stops)), len(stops) - 1)
+        return stops[idx]
+
+    trade_colors = [_trade_color(p) for p in trade_pcts]
+    trade_text = [f"{p:.1%}" for p in trade_pcts]
+
+    # --- Right panel colors: HK teal scale (darker = better), gray for N/A ---
+    # Normalize lift values for color mapping
+    measurable = df[df["lift_measurable"] == 1]["revenue_per_promo_dollar"].dropna()
+    if not measurable.empty:
+        lift_min = measurable.min()
+        lift_max = measurable.max()
+    else:
+        lift_min = lift_max = 0.0
+
+    hk_stops = [HK[5], HK[15], HK[25], HK[35], HK[45], HK[55], HK[70], HK[85]]
+
+    def _lift_color(val, measurable_flag: int) -> str:
+        if not measurable_flag or val is None or pd.isna(val):
+            return DISABLED
+        if lift_max == lift_min:
+            return HK_DEFAULT
+        # Higher lift → darker teal (more efficient)
+        normalized = (float(val) - lift_min) / (lift_max - lift_min)
+        idx = min(int(normalized * len(hk_stops)), len(hk_stops) - 1)
+        # Invert: highest value gets darkest (index 0)
+        return hk_stops[len(hk_stops) - 1 - idx]
+
+    lift_colors = [
+        _lift_color(row["revenue_per_promo_dollar"], int(row["lift_measurable"]))
+        for _, row in df.iterrows()
+    ]
+
+    lift_values = [
+        float(row["revenue_per_promo_dollar"]) if int(row["lift_measurable"]) else 0.0
+        for _, row in df.iterrows()
+    ]
+    lift_text = [
+        f"${float(row['revenue_per_promo_dollar']):.1f}" if int(row["lift_measurable"])
+        else "No data"
+        for _, row in df.iterrows()
+    ]
+
+    # --- Build figure ---
+    fig = make_subplots(
+        rows=1,
+        cols=2,
+        shared_yaxes=True,
+        column_widths=[0.5, 0.5],
+        horizontal_spacing=0.06,
+        subplot_titles=[
+            "Trade Spend as % of Revenue",
+            "Revenue per Promo Dollar Invested",
+        ],
+    )
+
+    fig.add_trace(
+        go.Bar(
+            x=df["trade_spend_pct"].tolist(),
+            y=retailers,
+            orientation="h",
+            marker=dict(color=trade_colors, line=dict(width=0)),
+            name="Trade Spend %",
+            text=trade_text,
+            textposition="outside",
+            textfont=dict(family=FONT_SANS, size=12, color=TEXT_PRIMARY),
+            showlegend=False,
+            hovertemplate="%{y}: %{text}<extra></extra>",
+        ),
+        row=1, col=1,
+    )
+
+    fig.add_trace(
+        go.Bar(
+            x=lift_values,
+            y=retailers,
+            orientation="h",
+            marker=dict(color=lift_colors, line=dict(width=0)),
+            name="Revenue / Promo $",
+            text=lift_text,
+            textposition="outside",
+            textfont=dict(family=FONT_SANS, size=12, color=TEXT_PRIMARY),
+            showlegend=False,
+            hovertemplate="%{y}: %{text}<extra></extra>",
+        ),
+        row=1, col=2,
+    )
+
+    # Reference line at 17% threshold on left panel
+    fig.add_vline(
+        x=_HIGH_TRADE_SPEND_PCT,
+        line=dict(color=REFERENCE, dash="dash", width=1.5),
+        row=1, col=1,
+    )
+
+    row_height = max(48, 320 // max(n, 1))
+    total_height = max(280, n * row_height + 80)
+
+    fig.update_layout(
+        template="simple_white",
+        paper_bgcolor=CANVAS,
+        plot_bgcolor=CANVAS,
+        height=total_height,
+        margin=dict(l=20, r=80, t=50, b=40),
+        font=dict(family=FONT_SANS, size=12, color=INK),
+        hoverlabel=dict(bgcolor=CANVAS, font_family=FONT_SANS),
+    )
+
+    fig.update_xaxes(
+        tickformat=".0%",
+        tickfont=dict(family=FONT_SANS, size=11, color=TEXT_SECONDARY),
+        gridcolor=GRIDLINE,
+        showgrid=True,
+        zeroline=False,
+        row=1, col=1,
+    )
+    fig.update_xaxes(
+        tickprefix="$",
+        tickfont=dict(family=FONT_SANS, size=11, color=TEXT_SECONDARY),
+        gridcolor=GRIDLINE,
+        showgrid=True,
+        zeroline=False,
+        row=1, col=2,
+    )
+    fig.update_yaxes(
+        tickfont=dict(family=FONT_SANS, size=12, color=TEXT_PRIMARY),
+        gridcolor=GRIDLINE,
+        showgrid=False,
+    )
+
+    # Style subplot title annotations
+    for ann in fig.layout.annotations:
+        ann.update(
+            font=dict(family=FONT_SANS, size=13, color=TEXT_SECONDARY),
+            y=ann.y + 0.02,
+        )
+
+    return fig

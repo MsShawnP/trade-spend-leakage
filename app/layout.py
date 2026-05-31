@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 from dash import dcc, html
 
-from app.charts import bump_chart, leakage_ledger
+from app.charts import bump_chart, efficiency_chart, leakage_ledger
 from app.components import footnote
 from app.constants import (
     APP_SUBTITLE,
@@ -22,7 +22,7 @@ from app.constants import (
     TEXT_PRIMARY,
     TEXT_SECONDARY,
 )
-from app.db import get_net_revenue, get_leakage_summary
+from app.db import get_net_revenue, get_leakage_summary, get_trade_efficiency
 
 
 # ---------------------------------------------------------------------------
@@ -124,6 +124,72 @@ def _section_net_revenue(df: pd.DataFrame) -> html.Div:
 
 
 # ---------------------------------------------------------------------------
+# Move 2 — Trade Spend Efficiency
+# ---------------------------------------------------------------------------
+
+def _section_efficiency(df: pd.DataFrame) -> html.Div:
+    fig = efficiency_chart(df) if not df.empty else None
+
+    chart_content: list = []
+    if fig is not None:
+        chart_content.append(dcc.Graph(
+            id="efficiency-chart",
+            figure=fig,
+            config={"displayModeBar": False},
+        ))
+    else:
+        chart_content.append(html.P(
+            "No efficiency data — run the pipeline first: python pipeline/run.py --moves 2",
+            style={"fontFamily": FONT_SANS, "fontSize": "14px", "color": TEXT_SECONDARY},
+        ))
+
+    return html.Div([
+        html.Div([
+            html.Span("02", style={
+                "fontFamily": FONT_SANS,
+                "fontSize": "12px",
+                "fontWeight": "500",
+                "color": RED,
+                "letterSpacing": "0.06em",
+                "marginRight": "10px",
+            }),
+            html.Span("Trade Spend Efficiency", style={
+                "fontFamily": FONT_SERIF,
+                "fontSize": "22px",
+                "fontWeight": "700",
+                "color": INK,
+            }),
+        ], style={"marginBottom": "10px"}),
+
+        html.P(
+            "Not all trade spend is equally productive. The left panel shows "
+            "each retailer's structural trade rate — the share of gross revenue "
+            "consumed before a dollar reaches the bottom line. Orange bars exceed "
+            "the 17% specialty food average. The right panel shows revenue generated "
+            "per promotional dollar invested during promotional periods.",
+            style={
+                "fontFamily": FONT_SANS,
+                "fontSize": "17px",
+                "color": TEXT_PRIMARY,
+                "lineHeight": "1.6",
+                "maxWidth": "660px",
+                "marginBottom": "20px",
+            },
+        ),
+
+        *chart_content,
+
+        footnote(
+            "Trade spend % from structural rate card in sku_costs, trailing 52 weeks. "
+            "Revenue per promo dollar: total scan revenue across all stores during "
+            "promotional periods ÷ total promo cost. Overlapping promo weeks are "
+            "counted once. Does not adjust for baseline — see Move 4 for incremental lift. "
+            "Dashed reference line at 17% (specialty food structural average)."
+        ),
+    ], id="section-efficiency", style={"marginBottom": SECTION_GAP})
+
+
+# ---------------------------------------------------------------------------
 # Move 3 — Leakage Detection
 # ---------------------------------------------------------------------------
 
@@ -189,6 +255,11 @@ def create_layout() -> html.Div:
     _EMPTY_NET = pd.DataFrame(columns=[
         "retailer", "gross_revenue", "trade_spend", "net_revenue", "net_to_gross_ratio",
     ])
+    _EMPTY_EFFICIENCY = pd.DataFrame(columns=[
+        "retailer", "trade_spend_pct", "trade_spend", "gross_revenue",
+        "total_promo_cost", "promo_period_revenue", "revenue_per_promo_dollar",
+        "lift_measurable",
+    ])
     _EMPTY_LEAKAGE = pd.DataFrame(columns=[
         "leakage_type", "display_name", "dollar_total", "instance_count", "classification",
     ])
@@ -197,6 +268,10 @@ def create_layout() -> html.Div:
         df_net = get_net_revenue()
     except FileNotFoundError:
         df_net = _EMPTY_NET
+
+    df_efficiency = get_trade_efficiency()
+    if df_efficiency.empty:
+        df_efficiency = _EMPTY_EFFICIENCY
 
     df_leakage = get_leakage_summary()
     if df_leakage.empty:
@@ -208,6 +283,7 @@ def create_layout() -> html.Div:
         html.Div([
             _brand_header(),
             _section_net_revenue(df_net),
+            _section_efficiency(df_efficiency),
             _section_leakage(df_leakage),
         ], style={
             "maxWidth": CONTENT_MAX_WIDTH,

@@ -54,6 +54,24 @@ def get_leakage_summary() -> pd.DataFrame:
         conn.close()
 
 
+def get_trade_efficiency() -> pd.DataFrame:
+    """Return results_trade_efficiency as a DataFrame, ordered by trade_spend_pct ASC."""
+    conn = _connect()
+    try:
+        return pd.read_sql_query(
+            "SELECT * FROM results_trade_efficiency ORDER BY trade_spend_pct ASC",
+            conn,
+        )
+    except Exception:
+        return pd.DataFrame(columns=[
+            "retailer", "trade_spend_pct", "trade_spend", "gross_revenue",
+            "total_promo_cost", "promo_period_revenue", "revenue_per_promo_dollar",
+            "lift_measurable",
+        ])
+    finally:
+        conn.close()
+
+
 def get_leakage_instances(leakage_type: str | None = None) -> pd.DataFrame:
     """Return results_leakage_instances, optionally filtered by leakage_type."""
     conn = _connect()
