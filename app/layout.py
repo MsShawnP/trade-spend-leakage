@@ -17,6 +17,7 @@ from app.constants import (
     GRIDLINE,
     INK,
     NAVY,
+    NAVY_HOVER,
     RED,
     SECTION_GAP,
     TEXT_PRIMARY,
@@ -63,6 +64,24 @@ def _brand_header() -> html.Div:
             "marginTop": "2px",
         }),
         html.Hr(style={"borderTop": f"1px solid {GRIDLINE}", "marginTop": "20px"}),
+        html.Div([
+            html.Button(
+                "Download Workbook",
+                id="btn-download-workbook",
+                style={
+                    "backgroundColor": NAVY,
+                    "color": "#ffffff",
+                    "border": "none",
+                    "borderRadius": "2px",
+                    "padding": "10px 20px",
+                    "fontFamily": FONT_SANS,
+                    "fontSize": "14px",
+                    "fontWeight": "600",
+                    "cursor": "pointer",
+                },
+            ),
+            dcc.Download(id="download-workbook"),
+        ], style={"marginTop": "12px", "marginBottom": "8px"}),
     ], style={"marginBottom": "40px"})
 
 

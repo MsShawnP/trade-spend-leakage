@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from dash import ALL, Input, Output, State, ctx
+from dash import ALL, Input, Output, State, ctx, dcc
 
 from app.charts import bump_chart, leakage_ledger, leakage_instances_grid, promo_roi_chart
 from app.components import callout_card, promo_callout_card
 from app.db import get_net_revenue, get_leakage_summary, get_leakage_instances, get_promo_roi
+from app.db import RESULTS_DB
+from workbook.generator import generate_workbook
 
 
 def register_callbacks(app) -> None:
@@ -143,3 +145,15 @@ def register_callbacks(app) -> None:
 
         card = promo_callout_card(matches.iloc[0])
         return fig, {"display": "block"}, card
+
+    # ----------------------------------------------------------
+    # g) Download workbook button → stream xlsx bytes
+    # ----------------------------------------------------------
+    @app.callback(
+        Output("download-workbook", "data"),
+        Input("btn-download-workbook", "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def download_workbook(n_clicks):
+        workbook_bytes = generate_workbook(RESULTS_DB)
+        return dcc.send_bytes(workbook_bytes, "cinderhaven-trade-spend-analysis.xlsx")
