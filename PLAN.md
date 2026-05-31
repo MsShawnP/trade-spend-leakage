@@ -74,7 +74,7 @@ Ship the Dash dashboard and linked Excel workbook across 8 implementation units,
 - [x] U2 — Move 1: Net Revenue Ranking bump chart + app shell (first shippable milestone)
 - [x] U3 — Move 3: Leakage Detection ledger + AG Grid expand (second shippable milestone)
 - [x] U4 — Move 2: Trade Spend Efficiency dual-measure chart
-- [ ] U5 — Move 4: Promotional ROI scatter chart + rolling-median baseline
+- [x] U5 — Move 4: Promotional ROI scatter chart + rolling-median baseline
 - [ ] U6 — Move 5: Accrual Reconciliation bar chart
 - [ ] U7 — Excel workbook generation + download button
 - [ ] U8 — Fly.io deployment

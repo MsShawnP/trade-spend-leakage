@@ -28,6 +28,7 @@ from app.constants import (
     PASS_TEXT,
     WARN_BG,
     WARN_TEXT,
+    NAVY_LIGHT,
 )
 
 
@@ -603,3 +604,124 @@ def _apply_promo_roi_layout(fig: go.Figure, axis_max: float = 1.0) -> None:
             zeroline=False,
         ),
     )
+
+
+
+# ---------------------------------------------------------------------------
+# Accrual Reconciliation — grouped bar + variance line (Move 5)
+# ---------------------------------------------------------------------------
+
+
+def accrual_chart(df: pd.DataFrame) -> go.Figure:
+    """Grouped bar chart — accrued vs actual deducted per month.
+
+    Left Y axis: accrued (Chicago navy) and actual (HK teal) bars side by side.
+    Right Y axis: variance line (REFERENCE gray dashed).
+    Month labels formatted as 'Jan '24'.
+    """
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+    if df.empty:
+        fig.update_layout(
+            template="simple_white",
+            paper_bgcolor=CANVAS,
+            plot_bgcolor=CANVAS,
+            height=360,
+            margin=dict(l=60, r=60, t=20, b=60),
+            font=dict(family=FONT_SANS, size=12, color=INK),
+        )
+        return fig
+
+    # Format month labels: "Jan '24"
+    def _label(month_str: str) -> str:
+        try:
+            import datetime
+            d = datetime.date.fromisoformat(month_str)
+            return d.strftime("%b '%y")
+        except Exception:
+            return month_str
+
+    labels = [_label(str(m)) for m in df["month"]]
+    accrued = df["accrued"].tolist()
+    actual = df["actual"].tolist()
+    variance = df["variance"].tolist()
+
+    fig.add_trace(
+        go.Bar(
+            name="Accrued",
+            x=labels,
+            y=accrued,
+            marker=dict(color=NAVY, line=dict(width=0)),
+            offsetgroup=0,
+            hovertemplate="%{x}<br>Accrued: $%{y:,.0f}<extra></extra>",
+        ),
+        secondary_y=False,
+    )
+
+    fig.add_trace(
+        go.Bar(
+            name="Actual deducted",
+            x=labels,
+            y=actual,
+            marker=dict(color=HK_DEFAULT, line=dict(width=0)),
+            offsetgroup=1,
+            hovertemplate="%{x}<br>Actual: $%{y:,.0f}<extra></extra>",
+        ),
+        secondary_y=False,
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            name="Variance",
+            x=labels,
+            y=variance,
+            mode="lines+markers",
+            line=dict(color=REFERENCE, dash="dash", width=1.5),
+            marker=dict(color=REFERENCE, size=6),
+            hovertemplate="%{x}<br>Variance: $%{y:,.0f}<extra></extra>",
+        ),
+        secondary_y=True,
+    )
+
+    fig.update_layout(
+        template="simple_white",
+        paper_bgcolor=CANVAS,
+        plot_bgcolor=CANVAS,
+        height=400,
+        margin=dict(l=60, r=60, t=20, b=60),
+        font=dict(family=FONT_SANS, size=12, color=INK),
+        hoverlabel=dict(bgcolor=CANVAS, font_family=FONT_SANS),
+        barmode="group",
+        legend=dict(
+            orientation="h",
+            x=0,
+            y=1.08,
+            font=dict(family=FONT_SANS, size=12, color=INK),
+            bgcolor="rgba(0,0,0,0)",
+        ),
+    )
+
+    fig.update_yaxes(
+        tickprefix="$",
+        tickformat=",.0f",
+        tickfont=dict(family=FONT_SANS, size=11, color=TEXT_SECONDARY),
+        gridcolor=GRIDLINE,
+        zeroline=True,
+        zerolinecolor=GRIDLINE,
+        secondary_y=False,
+    )
+    fig.update_yaxes(
+        title=dict(text="Variance ($)", font=dict(family=FONT_SANS, size=12, color=REFERENCE)),
+        tickprefix="$",
+        tickformat=",.0f",
+        tickfont=dict(family=FONT_SANS, size=11, color=REFERENCE),
+        gridcolor="rgba(0,0,0,0)",
+        zeroline=False,
+        secondary_y=True,
+    )
+    fig.update_xaxes(
+        tickfont=dict(family=FONT_SANS, size=11, color=TEXT_SECONDARY),
+        showgrid=False,
+    )
+
+    return fig

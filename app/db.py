@@ -92,6 +92,20 @@ def get_promo_roi() -> pd.DataFrame:
         conn.close()
 
 
+def get_accrual() -> pd.DataFrame:
+    """Return results_accrual as a DataFrame, ordered by month ASC."""
+    conn = _connect()
+    try:
+        return pd.read_sql_query(
+            "SELECT * FROM results_accrual ORDER BY month ASC",
+            conn,
+        )
+    except Exception:
+        return pd.DataFrame(columns=["month", "accrued", "actual", "variance"])
+    finally:
+        conn.close()
+
+
 def get_leakage_instances(leakage_type: str | None = None) -> pd.DataFrame:
     """Return results_leakage_instances, optionally filtered by leakage_type."""
     conn = _connect()

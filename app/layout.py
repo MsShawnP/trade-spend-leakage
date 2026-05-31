@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 from dash import dcc, html
 
-from app.charts import bump_chart, efficiency_chart, leakage_ledger, promo_roi_chart
+from app.charts import accrual_chart, bump_chart, efficiency_chart, leakage_ledger, promo_roi_chart
 from app.components import footnote
 from app.constants import (
     APP_SUBTITLE,
@@ -22,7 +22,7 @@ from app.constants import (
     TEXT_PRIMARY,
     TEXT_SECONDARY,
 )
-from app.db import get_net_revenue, get_leakage_summary, get_trade_efficiency, get_promo_roi
+from app.db import get_accrual, get_net_revenue, get_leakage_summary, get_trade_efficiency, get_promo_roi
 
 
 # ---------------------------------------------------------------------------
@@ -319,6 +319,71 @@ def _section_promo_roi(df: pd.DataFrame) -> html.Div:
 
 
 # ---------------------------------------------------------------------------
+# Move 5 — Accrual Reconciliation
+# ---------------------------------------------------------------------------
+
+def _section_accrual(df: pd.DataFrame) -> html.Div:
+    fig = accrual_chart(df) if not df.empty else None
+
+    chart_content: list = []
+    if fig is not None:
+        chart_content.append(dcc.Graph(
+            id="accrual-chart",
+            figure=fig,
+            config={"displayModeBar": False},
+        ))
+    else:
+        chart_content.append(html.P(
+            "No accrual data — run the pipeline first: python pipeline/run.py --moves 5",
+            style={"fontFamily": FONT_SANS, "fontSize": "14px", "color": TEXT_SECONDARY},
+        ))
+
+    return html.Div([
+        html.Div([
+            html.Span("05", style={
+                "fontFamily": FONT_SANS,
+                "fontSize": "12px",
+                "fontWeight": "500",
+                "color": RED,
+                "letterSpacing": "0.06em",
+                "marginRight": "10px",
+            }),
+            html.Span("Accrual Reconciliation", style={
+                "fontFamily": FONT_SERIF,
+                "fontSize": "22px",
+                "fontWeight": "700",
+                "color": INK,
+            }),
+        ], style={"marginBottom": "10px"}),
+
+        html.P(
+            "Each month, the rate card implies a specific trade spend accrual. "
+            "This chart compares that expected amount against what retailers "
+            "actually deducted. A persistent gap — in either direction — signals "
+            "a mismatch between contracted terms and execution.",
+            style={
+                "fontFamily": FONT_SANS,
+                "fontSize": "17px",
+                "color": TEXT_PRIMARY,
+                "lineHeight": "1.6",
+                "maxWidth": "660px",
+                "marginBottom": "20px",
+            },
+        ),
+
+        *chart_content,
+
+        footnote(
+            "Accrued trade spend: trailing-12-month scan revenue × structural "
+            "rate card per channel (sku_costs). Actual: all deductions recorded in "
+            "retailer_deductions, grouped by month. Positive variance = accrued "
+            "more than was taken (under-billed). Dashed line shows monthly variance "
+            "on secondary axis."
+        ),
+    ], id="section-accrual", style={"marginBottom": SECTION_GAP})
+
+
+# ---------------------------------------------------------------------------
 # Public entry point
 # ---------------------------------------------------------------------------
 
@@ -342,6 +407,7 @@ def create_layout() -> html.Div:
         "promo_revenue", "promo_weeks", "incremental_revenue",
         "incremental_margin", "is_money_losing",
     ])
+    _EMPTY_ACCRUAL = pd.DataFrame(columns=["month", "accrued", "actual", "variance"])
 
     try:
         df_net = get_net_revenue()
@@ -360,6 +426,10 @@ def create_layout() -> html.Div:
     if df_promo_roi.empty:
         df_promo_roi = _EMPTY_PROMO_ROI
 
+    df_accrual = get_accrual()
+    if df_accrual.empty:
+        df_accrual = _EMPTY_ACCRUAL
+
     return html.Div([
         dcc.Store(id="bump-pin-store", data=None),
         dcc.Store(id="leakage-pin-store", data=None),
@@ -370,6 +440,7 @@ def create_layout() -> html.Div:
             _section_efficiency(df_efficiency),
             _section_leakage(df_leakage),
             _section_promo_roi(df_promo_roi),
+            _section_accrual(df_accrual),
         ], style={
             "maxWidth": CONTENT_MAX_WIDTH,
             "margin": "0 auto",
