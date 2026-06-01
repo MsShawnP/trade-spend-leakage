@@ -133,46 +133,34 @@ def test_summary_dollar_totals_match_instance_sums(live_conn):
 
 
 # ---------------------------------------------------------------------------
-# Slug map coverage — guards against the retailer_id format mismatch bug
+# retailer_id format consistency — guards against the cross-table join bug
 #
 # See: docs/solutions/logic-errors/retailer-id-format-mismatch-join-produces-wrong-leakage-2026-06-01.md
-# A new Cinderhaven retailer not added to _SLUG_MAP_CTE will silently produce
-# 0 rows from detect_double_dips / detect_rate_discrepancies and inflate
-# detect_ghost_promos (NOT EXISTS becomes always-true).
+# Both raw.promotions and raw.retailer_deductions must use the same retailer_id
+# format. A format divergence causes the direct joins in detect_double_dips,
+# detect_ghost_promos, and detect_rate_discrepancies to silently return 0 rows.
 # ---------------------------------------------------------------------------
 
 @_LIVE
-def test_slug_map_covers_all_promotions_retailer_ids(live_conn):
-    """All raw.promotions retailer_ids must appear in _SLUG_MAP_CTE promo side."""
-    _MAPPED = {
-        'RET-WALMART', 'RET-COSTCO', 'RET-KROGER',
-        'RET-WHOLEFOODS', 'RET-SPROUTS', 'RET-REGIONAL',
-    }
+def test_promotions_and_deductions_use_same_retailer_id_format(live_conn):
+    """raw.promotions and raw.retailer_deductions must share the same retailer_id values.
+
+    If this fails, a format divergence has been introduced and the cross-table joins
+    in move3_leakage.py will silently produce wrong results.
+    """
     with live_conn.cursor() as cur:
-        cur.execute("SELECT DISTINCT retailer_id FROM raw.promotions ORDER BY retailer_id")
-        live_ids = {row[0] for row in cur.fetchall()}
+        cur.execute("SELECT DISTINCT retailer_id FROM raw.promotions")
+        promo_ids = {row[0] for row in cur.fetchall()}
+        cur.execute("SELECT DISTINCT retailer_id FROM raw.retailer_deductions")
+        deduction_ids = {row[0] for row in cur.fetchall()}
 
-    unmapped = live_ids - _MAPPED
-    assert not unmapped, (
-        f"{sorted(unmapped)} in raw.promotions missing from _SLUG_MAP_CTE — "
-        "add to pipeline/move3_leakage.py and pipeline/move2_efficiency.py"
-    )
-
-
-@_LIVE
-def test_slug_map_covers_all_deductions_retailer_ids(live_conn):
-    """All raw.retailer_deductions retailer_ids must appear in _SLUG_MAP_CTE deduction side."""
-    _MAPPED = {'walmart', 'costco', 'kroger', 'whole_foods', 'sprouts', 'regional'}
-    with live_conn.cursor() as cur:
-        cur.execute(
-            "SELECT DISTINCT retailer_id FROM raw.retailer_deductions ORDER BY retailer_id"
-        )
-        live_ids = {row[0] for row in cur.fetchall()}
-
-    unmapped = live_ids - _MAPPED
-    assert not unmapped, (
-        f"{sorted(unmapped)} in raw.retailer_deductions missing from _SLUG_MAP_CTE — "
-        "add to pipeline/move3_leakage.py and pipeline/move2_efficiency.py"
+    only_in_promos = promo_ids - deduction_ids
+    only_in_deductions = deduction_ids - promo_ids
+    assert not only_in_promos and not only_in_deductions, (
+        f"retailer_id mismatch between tables — "
+        f"only in promotions: {sorted(only_in_promos)}, "
+        f"only in deductions: {sorted(only_in_deductions)}. "
+        "Cross-table joins in move3_leakage.py will return wrong results."
     )
 
 

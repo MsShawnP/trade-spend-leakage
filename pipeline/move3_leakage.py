@@ -58,26 +58,12 @@ _KNOWN_TYPES = frozenset({
 # ---------------------------------------------------------------------------
 # Detection functions — each returns a DataFrame with _INSTANCE_COLS.
 # ---------------------------------------------------------------------------
-
+# Both raw.promotions and raw.retailer_deductions use the same 'RET-*'
+# retailer_id format, so all cross-table joins use direct equality.
 # ---------------------------------------------------------------------------
-# retailer_id slug map — raw.promotions uses 'RET-*' format;
-# raw.retailer_deductions uses lowercase slugs ('walmart', 'whole_foods', …).
-# This CTE is included in every query that joins the two tables.
-# ---------------------------------------------------------------------------
-_SLUG_MAP_CTE = """
-slug_map (promo_retailer_id, deduction_retailer_id) AS (
-    VALUES
-        ('RET-WALMART',    'walmart'),
-        ('RET-COSTCO',     'costco'),
-        ('RET-KROGER',     'kroger'),
-        ('RET-WHOLEFOODS', 'whole_foods'),
-        ('RET-SPROUTS',    'sprouts'),
-        ('RET-REGIONAL',   'regional')
-)"""
 
-_DOUBLE_DIP_SQL = f"""
-WITH {_SLUG_MAP_CTE},
-matches AS (
+_DOUBLE_DIP_SQL = """
+WITH matches AS (
     SELECT DISTINCT ON (d.deduction_id)
         d.deduction_id,
         d.retailer_id,
@@ -86,39 +72,35 @@ matches AS (
         p.promo_id,
         p.promo_cost      AS agreed_amount
     FROM raw.retailer_deductions d
-    JOIN slug_map sm ON sm.deduction_retailer_id = d.retailer_id
     JOIN raw.promotions p
-        ON p.retailer_id = sm.promo_retailer_id
+        ON p.retailer_id = d.retailer_id
        AND p.funding_mechanism = 'off_invoice'
        AND d.deduction_date BETWEEN p.start_week
-                                AND p.end_week + INTERVAL '14 days'
+                               AND p.end_week + INTERVAL '14 days'
     WHERE d.deduction_type = 'promo_billback'
     ORDER BY d.deduction_id, d.amount DESC
 )
 SELECT * FROM matches ORDER BY actual_amount DESC
 """
 
-_GHOST_PROMO_SQL = f"""
-WITH {_SLUG_MAP_CTE}
+_GHOST_PROMO_SQL = """
 SELECT
     d.deduction_id,
     d.retailer_id,
     d.amount        AS actual_amount,
     d.deduction_date AS period
 FROM raw.retailer_deductions d
-JOIN slug_map sm ON sm.deduction_retailer_id = d.retailer_id
 WHERE d.deduction_type = 'promo_billback'
   AND NOT EXISTS (
       SELECT 1 FROM raw.promotions p
-      WHERE p.retailer_id = sm.promo_retailer_id
+      WHERE p.retailer_id = d.retailer_id
         AND d.deduction_date BETWEEN p.start_week - INTERVAL '14 days'
                                  AND p.end_week   + INTERVAL '14 days'
   )
 ORDER BY d.amount DESC
 """
 
-_RATE_DISCREPANCY_SQL = f"""
-WITH {_SLUG_MAP_CTE}
+_RATE_DISCREPANCY_SQL = """
 SELECT DISTINCT ON (d.deduction_id)
     d.deduction_id,
     d.retailer_id,
@@ -128,9 +110,8 @@ SELECT DISTINCT ON (d.deduction_id)
     p.promo_cost        AS agreed_amount,
     d.amount - p.promo_cost AS variance
 FROM raw.retailer_deductions d
-JOIN slug_map sm ON sm.deduction_retailer_id = d.retailer_id
 JOIN raw.promotions p
-    ON p.retailer_id = sm.promo_retailer_id
+    ON p.retailer_id = d.retailer_id
    AND p.funding_mechanism != 'off_invoice'
    AND d.deduction_date BETWEEN p.start_week - INTERVAL '14 days'
                             AND p.end_week   + INTERVAL '14 days'

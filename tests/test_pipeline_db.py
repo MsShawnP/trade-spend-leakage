@@ -19,7 +19,7 @@ def test_source_conn_returns_valid_connection():
     from pipeline.db import source_conn
     with source_conn() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute("SELECT COUNT(*) AS n FROM scan_data")
+            cur.execute("SELECT COUNT(*) AS n FROM raw.scan_data")
             row = cur.fetchone()
     assert row["n"] > 0
 
