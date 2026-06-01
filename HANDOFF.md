@@ -3,6 +3,19 @@
 Session-by-session state. Updated by /log mid-session and /wrap at
 session end.
 
+---
+
+## 2026-06-01
+
+**Started from:** Project client-ready. HANDOFF recommended adding integration tests for leakage detection (compound doc suggestion).
+
+**Did:** Added two @_LIVE slug-map coverage tests to tests/test_move3_leakage.py — one checking raw.promotions retailer_ids against _SLUG_MAP_CTE, one checking raw.retailer_deductions retailer_ids. Committed and pushed (60a4286). Note: the len > 0 tests the HANDOFF had listed as "Next" were already in place from the second /improve session.
+
+**State:** 17/17 offline tests pass. 11 live tests in test_move3_leakage.py require DATABASE_URL + fly proxy. Dashboard live and correct at https://trade-spend-leakage.fly.dev/. No open tasks.
+
+**Next:** No open tasks. If returning: (a) run full live test suite to verify new slug-map tests pass (`fly proxy 5432 -a cinderhaven-db`, then `pytest`); (b) data refresh if Cinderhaven data has updated; (c) adapt for real client data.
+
+
 For durable choices, see DECISIONS.md.
 For the current work arc, see PLAN.md.
 For things that didn't work, see FAILURES.md.
