@@ -142,6 +142,34 @@ failed and may have its own entry below]
 
 ---
 
+### 2026-06-01 — fly proxy mapped to wrong remote port; cinderhaven-db Postgres listens on 5433
+
+**Attempted:** `fly proxy 5433:5432 -a cinderhaven-db` — standard assumption that Postgres listens on 5432 on the remote machine.
+
+**Why it didn't work:** The `cinderhaven-db` Fly Postgres app runs on port 5433, not the standard 5432. Socket file at `/run/postgresql/.s.PGSQL.5433` confirms this. The proxy connected on the local side but forwarded to the wrong remote port, resulting in auth failures that looked like a credentials problem.
+
+**What we tried instead:** `fly proxy 5434:5433 -a cinderhaven-db` — maps local 5434 (local 5432 already taken by a local Postgres install) to remote 5433. DATABASE_URL updated to port 5434. Auth succeeded.
+
+**Status:** Resolved. When connecting to cinderhaven-db, always use `fly proxy <local>:5433 -a cinderhaven-db`.
+
+**Tags:** fly, proxy, postgres, port, cinderhaven-db, 5433, connection
+
+---
+
+### 2026-06-01 — slug_map in move3_leakage.py used wrong deduction-side format; both tables use RET-*
+
+**Attempted:** The slug_map CTE added during the prior /improve session mapped `raw.promotions.retailer_id` (RET-WALMART) → `raw.retailer_deductions.retailer_id` (assumed lowercase: 'walmart'). The assumption came from a prior failure entry (2026-05-31) which documented that promotions used RET-* while deductions used lowercase.
+
+**Why it didn't work:** Both tables use `RET-*` format. The slug_map mapped to values that don't exist in `raw.retailer_deductions`. The JOIN `sm.deduction_retailer_id = d.retailer_id` matched 'walmart' against 'RET-WALMART' — always false. `detect_double_dips` and `detect_rate_discrepancies` returned 0 rows silently. `detect_ghost_promos` also returned 0 because its slug_map JOIN also produced no rows. Total pipeline output dropped from the correct 2,512 to 1,521 (only `detect_unauthorized` was unaffected, since it doesn't join promotions). The incorrect numbers were deployed and presented as the "corrected" figures for two sessions.
+
+**What we tried instead:** Removed `_SLUG_MAP_CTE` entirely. Rewrote all three cross-table queries with direct joins on `p.retailer_id = d.retailer_id`. 37/37 tests pass. Correct leakage: 2,512 instances / $235,760.
+
+**Status:** Resolved. Rule: before writing any pipeline SQL that joins two tables on `retailer_id`, run `SELECT DISTINCT retailer_id FROM raw.<table>` on both tables first and confirm they share the same format.
+
+**Tags:** move3, leakage, slug_map, retailer_id, RET-format, silent-failure, double-dips, ghost-promos, direct-join
+
+---
+
 ### 2026-05-31 — charts.py edit duplicated a function by targeting the wrong insertion point
 
 **Attempted:** Used Edit to insert `accrual_chart()` before `_apply_promo_roi_layout` in `charts.py`. The old_string matched the function *signature line*, but the function body immediately followed — so the edit inserted new code before the signature, then the original body was still there, producing two complete definitions of `_apply_promo_roi_layout` plus a junk sentinel variable.

@@ -63,10 +63,14 @@ Each entry:
 - **Scope:** All pipeline `run()` functions (U2–U6) that read from Postgres and write to results.db.
 - **Do not:** Pass a DataFrame with `decimal.Decimal` columns to `df.to_sql()` on a SQLite connection. Always cast numeric columns with `df[col] = df[col].astype(float)` first.
 
-### 2026-05-31 — promotions.retailer_id uses RET-* format; retailer_deductions uses lowercase slugs
-- **Why:** Discovered during U4 when the slug_map VALUES CTE produced zero matches. `raw.promotions.retailer_id` = `RET-WALMART`, `RET-COSTCO`, etc. `raw.retailer_deductions.retailer_id` = `walmart`, `costco`, etc. Two different conventions coexist in the same Postgres schema with no documentation.
-- **Scope:** All pipeline modules that join against `raw.promotions` (U4 move2_efficiency, U5 move4_promo_roi, and any future moves).
-- **Do not:** Use `app/constants.py` `CHANNEL_RATE_COLS` keys or `RETAILER_DISPLAY` keys as the join key against `raw.promotions.retailer_id` — they will always miss. Use the `RET-*` format for promotions joins only.
+### ~~2026-05-31 — promotions.retailer_id uses RET-\* format; retailer_deductions uses lowercase slugs~~ *(superseded 2026-06-01 — see entry below)*
+- ~~**Why:** Discovered during U4 when the slug_map VALUES CTE produced zero matches. `raw.promotions.retailer_id` = `RET-WALMART`. `raw.retailer_deductions.retailer_id` = `walmart`. Two different conventions coexist.~~
+- ~~**Do not:** Use slug keys for promotions joins.~~
+
+### 2026-06-01 — Both raw.promotions and raw.retailer_deductions use RET-\* retailer_id format *(supersedes 2026-05-31 entry above)*
+- **Why:** Live data query confirms both tables use `RET-WALMART`, `RET-COSTCO`, etc. The prior entry was based on a U4 debugging session that misidentified the deductions format. A slug_map CTE built on the wrong assumption killed double-dip and ghost-promo detection silently for two sessions.
+- **Scope:** All pipeline modules joining `raw.promotions` to `raw.retailer_deductions` (move3_leakage.py and any future moves). Direct equality join: `ON p.retailer_id = d.retailer_id`.
+- **Do not:** Add a slug_map or format-translation CTE between these two tables. Do not assume the tables use different formats without running `SELECT DISTINCT retailer_id` on both first.
 
 ### 2026-05-31 — scan_data retailer names come from stores join, not a direct column
 - **Why:** `scan_data` has `store_id`, not `retailer_id`. Retailer display names (`'Walmart'`, `'Whole Foods'`, etc.) come from `JOIN stores ON store_id`. Pipeline SQL CASE statements must match these display names. `constants.py` slug keys (`'walmart'`, `'whole_foods'`) are an app-layer convention only. Getting this wrong silently produces NULL trade rates.
@@ -92,6 +96,11 @@ Each entry:
 - **Why:** Preview screenshot tool times out (30s) with Plotly's JS bundle. `/_dash-layout` returns the full component tree and figure data as JSON — verifies component IDs, trace counts, callback wiring, and data values reliably and instantly.
 - **Scope:** All dashboard verification for this project (U4–U8).
 - **Do not:** Rely on `preview_screenshot` to verify that chart data rendered correctly. Use it only for visual spot-checks where a timeout is acceptable. Use `curl http://127.0.0.1:<port>/_dash-layout | python -c "..."` for data/structure verification.
+
+### 2026-06-01 — Use `fly proxy 5434:5433 -a cinderhaven-db` for local pipeline runs
+- **Why:** `cinderhaven-db` Postgres listens on port 5433 (not standard 5432). Local port 5432 is occupied by a local Postgres install. `fly proxy 5433:5432` silently forwards to the wrong remote port; `fly proxy 5434:5433` is the correct mapping. DATABASE_URL must use port 5434: `postgres://postgres:<pass>@localhost:5434/cinderhaven`.
+- **Scope:** All local `python pipeline/run.py` runs and live `pytest` runs requiring DATABASE_URL.
+- **Do not:** Use `fly proxy 5432 -a cinderhaven-db` (port conflict) or `fly proxy 5433:5432 -a cinderhaven-db` (wrong remote port — Postgres is on 5433, not 5432).
 
 ### 2026-05-31 — results.db is pre-generated locally and baked into the Docker image via COPY
 - **Why:** Fly Depot build servers don't have access to the Fly private network, so the pipeline can't connect to `cinderhaven-db.internal` during `fly deploy`. Pre-generating locally and including via `COPY` is simpler and equally reliable for synthetic data that doesn't change frequently.

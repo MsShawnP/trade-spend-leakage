@@ -5,6 +5,18 @@ session end.
 
 ---
 
+## 2026-06-01 (second entry)
+
+**Started from:** Project deployed, client-ready. HANDOFF recommended data refresh + live tests.
+
+**Did:** Fixed Fly Postgres auth (pg_hba.conf md5→scram-sha-256 + password reset via sftp/SSH). Ran full pipeline. Live tests surfaced critical bug: slug_map from prior session mapped deductions to lowercase slugs but both tables use RET-* format — double-dip and ghost-promo detection returned 0 rows silently. Removed slug_map from move3_leakage.py, rewrote 3 queries with direct joins. Replaced slug_map tests with test_promotions_and_deductions_use_same_retailer_id_format. Fixed test_pipeline_db raw.scan_data. 37/37 pass. Redeployed. Correct numbers: 2,512 instances / $235,760 (173 double-funded · 817 ghost promos · 1 rate discrepancy · 1,521 unauthorized).
+
+**State:** Dashboard live at https://trade-spend-leakage.fly.dev/ with correct data. 37 pass, 2 skip. All pushed. Fly proxy must use local 5434 → remote 5433 (not standard 5432). pg_hba.conf now uses scram-sha-256. Compound doc contains incorrect format description (marked as next task).
+
+**Next:** Update docs/solutions/logic-errors/retailer-id-format-mismatch-join-produces-wrong-leakage-2026-06-01.md — it states "raw.retailer_deductions uses lowercase slugs" which is wrong; both tables use RET-* format. The slug_map was never needed.
+
+---
+
 ## 2026-06-01
 
 **Started from:** Project client-ready. HANDOFF recommended adding integration tests for leakage detection (compound doc suggestion).
