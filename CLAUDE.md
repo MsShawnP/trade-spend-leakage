@@ -34,6 +34,7 @@ Forensic trade spend analysis for specialty food brands ($5M–$30M). Detects le
 - HANDOFF.md — current session state
 - PLAN.md — current work arc
 - FAILURES.md — things tried that didn't work
+- `docs/solutions/` — documented solutions to past bugs and patterns, organized by category with YAML frontmatter (`module`, `tags`, `problem_type`). Relevant when writing or debugging pipeline SQL.
 
 Read PLAN.md and HANDOFF.md at session start. DECISIONS.md and
 FAILURES.md as relevant.
