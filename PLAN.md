@@ -115,3 +115,15 @@ Ship the Dash dashboard and linked Excel workbook across 8 implementation units,
   - Removed empty `src/CLAUDE.md` (src/ had no source code — conventions doc was misleading)
 - **Deferred:** None
 - **Next review:** 2026-07-01 (stable project, ~30-day cadence)
+
+### 2026-06-01 — Improvement pass
+- **Trigger:** User-initiated, second pass after v1.0-client-ready tag. Included security + data-analysis deep reviews.
+- **What was reviewed:** Security audit (all Python + Dockerfile), code review (diff clean), data analysis correctness review (all 5 pipeline moves + charts + footnotes)
+- **What was fixed:**
+  - **Critical** — `pipeline/move3_leakage.py`: added `_SLUG_MAP_CTE` to `_DOUBLE_DIP_SQL`, `_GHOST_PROMO_SQL`, `_RATE_DISCREPANCY_SQL`. The `RET-*` vs lowercase-slug `retailer_id` mismatch was causing double-dip and rate-discrepancy queries to return 0 rows, and ghost-promo to flag all billbacks. Leakage numbers were materially wrong. Reran pipeline → redeployed. New numbers: 1,521 instances / $144,320 (was 2,512 / $235,760 due to inflation).
+  - **Important** — `app/layout.py`: Move 5 accrual footnote updated to explicitly state "actual" includes all deduction types (operational + trade), not a pure trade-spend comparison.
+  - **Important** — `app/app.py`: `debug=True` gated on `DASH_DEBUG` env var (defaults `False`).
+  - **Nice to have** — `incremental_margin` duplicate column removed from pipeline, db reader, workbook tab, and tests. Column was identical to `incremental_revenue` but implied net-of-cost margin.
+  - **Nice to have** — `pipeline/move2_efficiency.py`: `warnings.warn` added for unmapped `promotions.retailer_id` slugs.
+- **Deferred:** Move 5 `actual` could be further filtered to trade-only deduction types for a cleaner comparison — deferred; footnote clarification is sufficient for the portfolio piece.
+- **Next review:** 2026-07-01
