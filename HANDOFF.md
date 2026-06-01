@@ -5,6 +5,18 @@ session end.
 
 ---
 
+## 2026-06-01
+
+**Started from:** Project complete and client-ready. One open task: fix the compound doc that described the slug_map CTE as the fix when it was actually the bug.
+
+**Did:** Rewrote `docs/solutions/logic-errors/retailer-id-format-mismatch-join-produces-wrong-leakage-2026-06-01.md` from scratch. The original doc had the root cause and fix backwards — it said "deductions uses lowercase slugs, add slug_map" when the truth is both tables use RET-* and the fix was removing the slug_map. Verified against current code and DECISIONS.md before rewriting. Committed.
+
+**State:** Compound doc accurate. Project otherwise unchanged — dashboard live, 37 tests pass, all committed. No open tasks.
+
+**Next:** No active tasks. Next `/improve` due 2026-07-01. If returning before then: (a) data refresh — `fly proxy 5434:5433 -a cinderhaven-db` → `python pipeline/run.py --moves 1 2 3 4 5` → `fly deploy`; (b) adapt for a real client's data.
+
+---
+
 ## 2026-06-01 (second entry)
 
 **Started from:** Project deployed, client-ready. HANDOFF recommended data refresh + live tests.
