@@ -237,7 +237,6 @@ def compute_promo_roi(source) -> pd.DataFrame:
             "promo_revenue":            promo_rev if promo_wks > 0 else None,
             "promo_weeks":              promo_wks if promo_wks > 0 else None,
             "incremental_revenue":      incremental,
-            "incremental_margin":       incremental,   # alias — revenue proxy (no COGS in schema)
             "is_money_losing":          int(is_money_losing) if is_money_losing is not None else None,
         })
 
@@ -250,7 +249,7 @@ def _empty_result() -> pd.DataFrame:
         "start_week", "end_week", "promo_cost", "promo_type",
         "has_sufficient_baseline", "baseline_weekly_revenue",
         "promo_revenue", "promo_weeks", "incremental_revenue",
-        "incremental_margin", "is_money_losing",
+        "is_money_losing",
     ])
 
 
@@ -265,7 +264,7 @@ def run() -> None:
 
     # Float casts for clean SQLite storage
     for col in ["promo_cost", "baseline_weekly_revenue", "promo_revenue",
-                "incremental_revenue", "incremental_margin"]:
+                "incremental_revenue"]:
         df[col] = pd.to_numeric(df[col], errors="coerce").astype(float)
 
     for col in ["has_sufficient_baseline", "promo_weeks"]:

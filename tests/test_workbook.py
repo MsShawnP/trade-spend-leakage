@@ -73,13 +73,13 @@ def _make_results_db(path: Path) -> None:
             start_week TEXT, end_week TEXT, promo_cost REAL, promo_type TEXT,
             has_sufficient_baseline INTEGER, baseline_weekly_revenue REAL,
             promo_revenue REAL, promo_weeks INTEGER, incremental_revenue REAL,
-            incremental_margin REAL, is_money_losing INTEGER
+            is_money_losing INTEGER
         )
     """)
     conn.execute(
-        "INSERT INTO results_promo_roi VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO results_promo_roi VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         ("P001", "SKU-001", "walmart", "Walmart", "2024-01-01", "2024-01-14",
-         5000.0, "TPR", 1, 20000.0, 30000.0, 2, 10000.0, 7000.0, 0),
+         5000.0, "TPR", 1, 20000.0, 30000.0, 2, 10000.0, 0),
     )
     conn.execute("""
         CREATE TABLE results_accrual (

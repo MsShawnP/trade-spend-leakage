@@ -395,9 +395,12 @@ def _section_accrual(df: pd.DataFrame) -> html.Div:
         footnote(
             "Accrued trade spend: trailing-12-month scan revenue × structural "
             "rate card per channel (sku_costs). Actual: all deductions recorded in "
-            "retailer_deductions, grouped by month. Positive variance = accrued "
-            "more than was taken (under-billed). Dashed line shows monthly variance "
-            "on secondary axis."
+            "retailer_deductions, grouped by month — includes operational charges "
+            "(label fines, spoilage, damaged goods, delivery penalties) in addition "
+            "to trade-specific deductions (promo billbacks, slotting). Variance "
+            "reflects total cash outflows vs. accrued trade spend, not a pure "
+            "trade-for-trade comparison. Positive variance = accrued more than was "
+            "taken. Dashed line shows monthly variance on secondary axis."
         ),
     ], id="section-accrual", style={"marginBottom": SECTION_GAP})
 

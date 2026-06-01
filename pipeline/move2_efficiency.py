@@ -18,6 +18,7 @@ incremental lift. This is the simpler ratio for the efficiency comparison.
 from __future__ import annotations
 
 import sqlite3
+import warnings
 
 import pandas as pd
 import psycopg2.extras
@@ -127,9 +128,17 @@ def compute_efficiency(source, results_db_conn: sqlite3.Connection) -> pd.DataFr
                  "promo_period_revenue", "revenue_per_promo_dollar"]
     )
 
-    # Map slug → display name for joining
+    # Map slug → display name for joining; warn on any unrecognised slug
     if not df_promo.empty:
         df_promo["retailer"] = df_promo["retailer_id"].map(_SLUG_TO_DISPLAY)
+        unknown = df_promo.loc[df_promo["retailer"].isna(), "retailer_id"].unique().tolist()
+        if unknown:
+            warnings.warn(
+                f"Move 2: unrecognised promotions.retailer_id slug(s) {unknown} — "
+                "promo efficiency data for these retailers will be missing. "
+                "Add them to _SLUG_TO_DISPLAY in move2_efficiency.py.",
+                stacklevel=2,
+            )
         for col in ["total_promo_cost", "promo_period_revenue", "revenue_per_promo_dollar"]:
             df_promo[col] = pd.to_numeric(df_promo[col], errors="coerce").astype(float)
 

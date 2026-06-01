@@ -35,7 +35,6 @@ _REQUIRED_COLS = [
     "promo_revenue",
     "promo_weeks",
     "incremental_revenue",
-    "incremental_margin",
     "is_money_losing",
 ]
 
@@ -71,7 +70,6 @@ def _make_promo_row(**kwargs) -> dict:
         "promo_revenue": 50000.0,
         "promo_weeks": 4,
         "incremental_revenue": 10000.0,
-        "incremental_margin": 10000.0,
         "is_money_losing": 0,
     }
     defaults.update(kwargs)
@@ -83,7 +81,6 @@ def test_insufficient_baseline_flag_when_is_money_losing_is_none():
     row = _make_promo_row(
         has_sufficient_baseline=0,
         incremental_revenue=None,
-        incremental_margin=None,
         is_money_losing=None,
     )
     df = pd.DataFrame([row])
@@ -112,12 +109,6 @@ def test_null_promo_cost_yields_no_roi_flag():
     assert df.loc[0, "promo_cost"] is None
     assert df.loc[0, "is_money_losing"] is None
 
-
-def test_incremental_margin_equals_incremental_revenue():
-    """incremental_margin is a revenue proxy — must equal incremental_revenue."""
-    row = _make_promo_row(incremental_revenue=9500.0, incremental_margin=9500.0)
-    df = pd.DataFrame([row])
-    assert df.loc[0, "incremental_revenue"] == df.loc[0, "incremental_margin"]
 
 
 # ---------------------------------------------------------------------------

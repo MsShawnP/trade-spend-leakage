@@ -90,7 +90,7 @@ def get_promo_roi() -> pd.DataFrame:
             "start_week", "end_week", "promo_cost", "promo_type",
             "has_sufficient_baseline", "baseline_weekly_revenue",
             "promo_revenue", "promo_weeks", "incremental_revenue",
-            "incremental_margin", "is_money_losing",
+            "is_money_losing",
         ])
     finally:
         conn.close()
