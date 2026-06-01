@@ -21,7 +21,7 @@ Built on synthetic Cinderhaven data. Part of the Lailara LLC consulting portfoli
 
 ## Live demo
 
-**https://trade-spend-leakage.fly.dev/**
+**https://trade-spend.lailarallc.com**
 
 No login required. The dashboard runs on Fly.io with a pre-computed `results.db` baked into the image.
 
