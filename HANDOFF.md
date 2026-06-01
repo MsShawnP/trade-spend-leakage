@@ -9,6 +9,18 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-01 — Wrap: second /improve pass + /ce:compound
+
+**Started from:** Project deployed, tagged v1.0-client-ready. No open tasks. HANDOFF recommended /improve and /ce:compound.
+
+**Did:** Second /improve pass with security + data-analysis deep reviews. Found and fixed critical Move 3 leakage SQL bug (RET-* vs lowercase slug retailer_id mismatch — double-dip and rate-discrepancy returned 0 rows; ghost promos inflated all billbacks). Re-ran pipeline Move 3, redeployed. Corrected leakage: 1,521 instances / $144,320. Also fixed Move 5 accrual footnote, debug=True, removed incremental_margin duplicate column, added Move 2 unknown-slug warning. Ran /ce:compound — documented the leakage SQL bug in docs/solutions/logic-errors/; updated CLAUDE.md and plan doc.
+
+**State:** Dashboard live with correct data. All commits pushed. docs/solutions/ initialized. 17/17 tests pass. Project complete and client-ready.
+
+**Next:** No open tasks. If returning: (a) add integration test for leakage detection functions (assert len > 0 per function against live Postgres — recommended by compound doc); (b) data refresh — run pipeline → fly deploy; (c) adapt for real client data.
+
+---
+
 ## 2026-05-31 — Wrap: /improve complete, project client-ready
 
 **Started from:** Project fully shipped (U8 complete). Dashboard live at https://trade-spend-leakage.fly.dev/. HANDOFF recommended a pre-client `/improve` pass.
