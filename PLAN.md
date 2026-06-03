@@ -81,7 +81,7 @@ Ship the Dash dashboard and linked Excel workbook across 8 implementation units,
 
 ### Definition of done for Phase 2
 
-- [x] Dashboard accessible at a public Fly.io URL without login — https://trade-spend-leakage.fly.dev/
+- [x] Dashboard accessible at a public Fly.io URL without login — https://trade-spend.lailarallc.com/
 - [x] All 5 analytical moves functional
 - [x] "Download workbook" produces a valid xlsx with 6 sheets
 - [x] Workbook numbers match dashboard numbers

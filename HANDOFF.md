@@ -23,7 +23,7 @@ session end.
 
 **Did:** Fixed Fly Postgres auth (pg_hba.conf md5→scram-sha-256 + password reset via sftp/SSH). Ran full pipeline. Live tests surfaced critical bug: slug_map from prior session mapped deductions to lowercase slugs but both tables use RET-* format — double-dip and ghost-promo detection returned 0 rows silently. Removed slug_map from move3_leakage.py, rewrote 3 queries with direct joins. Replaced slug_map tests with test_promotions_and_deductions_use_same_retailer_id_format. Fixed test_pipeline_db raw.scan_data. 37/37 pass. Redeployed. Correct numbers: 2,512 instances / $235,760 (173 double-funded · 817 ghost promos · 1 rate discrepancy · 1,521 unauthorized).
 
-**State:** Dashboard live at https://trade-spend-leakage.fly.dev/ with correct data. 37 pass, 2 skip. All pushed. Fly proxy must use local 5434 → remote 5433 (not standard 5432). pg_hba.conf now uses scram-sha-256. Compound doc contains incorrect format description (marked as next task).
+**State:** Dashboard live at https://trade-spend.lailarallc.com/ with correct data. 37 pass, 2 skip. All pushed. Fly proxy must use local 5434 → remote 5433 (not standard 5432). pg_hba.conf now uses scram-sha-256. Compound doc contains incorrect format description (marked as next task).
 
 **Next:** Update docs/solutions/logic-errors/retailer-id-format-mismatch-join-produces-wrong-leakage-2026-06-01.md — it states "raw.retailer_deductions uses lowercase slugs" which is wrong; both tables use RET-* format. The slug_map was never needed.
 
@@ -35,7 +35,7 @@ session end.
 
 **Did:** Added two @_LIVE slug-map coverage tests to tests/test_move3_leakage.py — one checking raw.promotions retailer_ids against _SLUG_MAP_CTE, one checking raw.retailer_deductions retailer_ids. Committed and pushed (60a4286). Note: the len > 0 tests the HANDOFF had listed as "Next" were already in place from the second /improve session.
 
-**State:** 17/17 offline tests pass. 11 live tests in test_move3_leakage.py require DATABASE_URL + fly proxy. Dashboard live and correct at https://trade-spend-leakage.fly.dev/. No open tasks.
+**State:** 17/17 offline tests pass. 11 live tests in test_move3_leakage.py require DATABASE_URL + fly proxy. Dashboard live and correct at https://trade-spend.lailarallc.com/. No open tasks.
 
 **Next:** No open tasks. If returning: (a) run full live test suite to verify new slug-map tests pass (`fly proxy 5432 -a cinderhaven-db`, then `pytest`); (b) data refresh if Cinderhaven data has updated; (c) adapt for real client data.
 
@@ -60,7 +60,7 @@ For things that didn't work, see FAILURES.md.
 
 ## 2026-05-31 — Wrap: /improve complete, project client-ready
 
-**Started from:** Project fully shipped (U8 complete). Dashboard live at https://trade-spend-leakage.fly.dev/. HANDOFF recommended a pre-client `/improve` pass.
+**Started from:** Project fully shipped (U8 complete). Dashboard live at https://trade-spend.lailarallc.com/. HANDOFF recommended a pre-client `/improve` pass.
 
 **Did:** Ran full `/improve` audit. Fixed all 6 findings: README updated with live URL + deployed-state context + data refresh pattern; stale "75 rows" docstring removed from `app/db.py`; dead ImportError fallback removed from `app/app.py`; portfolio brief moved from root to `docs/`; empty `src/CLAUDE.md` removed; bare `except Exception` narrowed to `except sqlite3.OperationalError` across all 6 db readers. 18/18 tests pass.
 
@@ -76,7 +76,7 @@ For things that didn't work, see FAILURES.md.
 
 **Did:** Wrote Dockerfile + fly.toml + run.py + .dockerignore. Created Fly app. Hit Depot DNS wall (build-time pipeline approach failed — Depot servers can't reach cinderhaven-db.internal). Switched to pre-generated results.db baked in via COPY. Deployed successfully. Phase 2 definition of done fully satisfied.
 
-**State:** Dashboard live at https://trade-spend-leakage.fly.dev/ — health check 200, all 5 moves functional, workbook download wired. Two Fly machines running. results.db baked into image (352 KB). All 8 units complete.
+**State:** Dashboard live at https://trade-spend.lailarallc.com/ — health check 200, all 5 moves functional, workbook download wired. Two Fly machines running. results.db baked into image (352 KB). All 8 units complete.
 
 **Next:** Phase 2 is done. Run /improve for a pre-client cleanup pass. Also document the refresh pattern (run pipeline locally → fly deploy) in README.
 
