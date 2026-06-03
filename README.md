@@ -23,9 +23,9 @@ Built on synthetic Cinderhaven data. Part of the Lailara LLC consulting portfoli
 ## Data contract
 
 Canonical Cinderhaven conformance — 50 SKUs across 5 product lines and 6 contracted retailers.
-## Live demo
+## Live
 
-**https://trade-spend.lailarallc.com**
+**Live:** https://trade-spend.lailarallc.com
 
 No login required. The dashboard runs on Fly.io with a pre-computed `results.db` baked into the image.
 
