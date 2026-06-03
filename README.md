@@ -19,6 +19,10 @@ Built on synthetic Cinderhaven data. Part of the Lailara LLC consulting portfoli
 - **Pipeline:** Python — pre-computes all five analytical moves into `data/results.db`
 - **Workbook:** openpyxl — generated server-side on demand
 
+
+## Data contract
+
+Canonical Cinderhaven conformance — 50 SKUs across 5 product lines and 6 contracted retailers.
 ## Live demo
 
 **https://trade-spend.lailarallc.com**
@@ -86,3 +90,6 @@ fly deploy
 - `HANDOFF.md` — session-by-session state
 - `DECISIONS.md` — durable choices with rationale
 - `FAILURES.md` — dead ends and why they failed
+
+---
+Built by [Lailara LLC](https://lailarallc.com) — data hygiene and analytics consulting for specialty food brands scaling into national retail.
