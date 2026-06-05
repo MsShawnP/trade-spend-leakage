@@ -23,12 +23,13 @@ dist/
 # Data files (never commit real client data)
 data/raw/
 data/client/
-data/results.db
 *.csv
 *.xlsx
 *.xls
 !data/synthetic/**
 !tests/fixtures/**
+# results.db is pre-generated synthetic data required at runtime
+!data/results.db
 
 # Excel outputs (generated, not source)
 output/
