@@ -12,6 +12,12 @@ Dual delivery:
 
 Built on synthetic Cinderhaven data. Part of the Lailara LLC consulting portfolio.
 
+## Data Contract
+
+Cinderhaven canonical platform data: 50 SKUs across 5 product lines (Artisan Sauces, Pantry Staples, Specialty Condiments, Dried Goods, Snack Bites), 6 contracted retailers (Walmart, Costco, Whole Foods, Sprouts, Kroger, Regional Group), 3 distributors (UNFI, KeHE, DPI Northwest) + 1 DTC channel (Shopify). Source: `CINDERHAVEN_CANONICAL.md` in `cinderhaven-data-platform`.
+
+> **Note:** Current baked data contains 3 product lines from an earlier platform export. A re-export with all 5 lines is pending.
+
 ## Stack
 
 - **Dashboard:** Plotly Dash + dash-bootstrap-components, deployed to Fly.io
