@@ -21,7 +21,7 @@ session end.
 
 5. **Slopegraph ranks do NOT flip.** Revenue gaps ($350K–$1.7M between adjacent retailers) are too large for trade cost differences ($20K–$220K) to bridge. Rewrote Section 01 copy: dropped "the lines that cross tell the story" narrative, reframed around gap compression (top 3 gross spread $820K compresses to $586K net, 29% absorption).
 
-**State:** Pipeline output in data/results.db is current against Postgres. Layout copy updated. 17/17 offline tests pass. NOT YET DEPLOYED — awaiting user review of rank result before `fly deploy`.
+**State:** Deployed and live at https://trade-spend.lailarallc.com/. 17/17 offline tests pass. All committed and pushed.
 
 **Move 1 key figures (new definition):**
 | Retailer | Gross | Trade Cost | Net | Eff Rate |
@@ -33,7 +33,7 @@ session end.
 | Sprouts | $3,900,857 | $396,528 | $3,504,329 | 10.2% |
 | Regional | $1,765,601 | $154,433 | $1,611,168 | 8.7% |
 
-**Next:** User reviews rank result. If approved: `fly deploy`. Then update README if leakage/promo numbers changed (they didn't: $248,314 / 2,569 / 123 promos).
+**Next:** No active tasks. Leakage/promo numbers unchanged ($248,314 / 2,569 / 123 promos). README figures still accurate. Next `/improve` due 2026-07-01.
 
 ---
 
