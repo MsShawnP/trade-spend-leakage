@@ -102,6 +102,21 @@ Each entry:
 - **Scope:** All local `python pipeline/run.py` runs and live `pytest` runs requiring DATABASE_URL.
 - **Do not:** Use `fly proxy 5432 -a cinderhaven-db` (port conflict) or `fly proxy 5433:5432 -a cinderhaven-db` (wrong remote port — Postgres is on 5433, not 5432).
 
+### 2026-06-29 — Move 1 net revenue = gross − structural trade − operational deductions
+- **Why:** Prior definition used only structural rate-card spend (7–12%), which was too compressed to differentiate retailers meaningfully. The dashboard claims to show revenue "after all trade costs," which requires actual deductions too. Operational deductions (damaged, spoilage, late delivery, short ship, label/pallet fines, pricing errors) from retailer_deductions are additive to the structural rate. Promo billbacks and slotting are excluded because the structural rate already funds those — including both would double-count.
+- **Scope:** `pipeline/move1_net_revenue.py`. Move 2 derives trade_spend_pct from Move 1 results, so it inherits the fix automatically.
+- **Do not:** Include promo_billback or slotting in the deduction add-on — they overlap with the structural rate card. Do not use total deductions as a replacement for structural trade spend — they measure different things (chargebacks vs off-invoice allowances).
+
+### 2026-06-29 — Kroger uses dedicated trade_spend_pct_kroger column, not the regional ELSE
+- **Why:** The sku_costs table has a `trade_spend_pct_kroger` column (10%) but the CASE statement was missing a Kroger branch, causing it to fall through to the ELSE (regional at 7%). Kroger's trade cost was understated by 3pp.
+- **Scope:** `pipeline/move1_net_revenue.py` SQL CASE statement.
+- **Do not:** Assume sku_costs column set matches the CASE branches without checking — query `information_schema.columns` when adding new retailers.
+
+### 2026-06-29 — Section 01 slopegraph shows gap compression, not rank flips
+- **Why:** With the corrected net-revenue definition (structural + operational deductions), no retailer changes rank gross→net. Revenue gaps between adjacent retailers ($350K–$1.7M) are too large for trade cost differences ($20K–$220K) to bridge. Rather than manufacture a finding, the copy was rewritten to frame what the data actually shows: trade costs compress the top-3 gap from $820K to $586K (29%). The slopegraph still communicates the compression visually through converging lines even without crossings.
+- **Scope:** `app/layout.py` Section 01 copy and footnote.
+- **Do not:** Hard-code aspirational rank flip narratives. The chart shows whatever the data produces.
+
 ### 2026-05-31 — results.db is pre-generated locally and baked into the Docker image via COPY
 - **Why:** Fly Depot build servers don't have access to the Fly private network, so the pipeline can't connect to `cinderhaven-db.internal` during `fly deploy`. Pre-generating locally and including via `COPY` is simpler and equally reliable for synthetic data that doesn't change frequently.
 - **Scope:** trade-spend-leakage Dockerfile and deployment process

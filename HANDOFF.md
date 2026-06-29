@@ -5,6 +5,38 @@ session end.
 
 ---
 
+## 2026-06-29
+
+**Started from:** Project deployed but serving stale results.db. Prompted to re-run pipeline, fix Section 02 copy bug, and investigate flat slopegraph.
+
+**Did:**
+
+1. **Fixed Section 02 copy bug:** "Orange bars exceed the 17% specialty food average" replaced with "All six retailers fall well below the 17% specialty food average" — no bars are orange because all are 7–13%.
+
+2. **Redefined Move 1 net revenue:** Was gross − structural rate-card trade spend only (7–12%, too compressed to flip ranks). Now: gross − structural trade − operational deductions (damaged, spoilage, late delivery, etc. from retailer_deductions; promo billbacks and slotting excluded to avoid double-counting with rate card). Added `_DEDUCTIONS_SQL` as a second query, merged in Python.
+
+3. **Fixed Kroger rate bug:** `trade_spend_pct_kroger` column existed in sku_costs but was never referenced in the CASE statement — Kroger fell into the ELSE (regional at 7%) instead of its actual 10%. Added Kroger branch to the CASE.
+
+4. **Re-ran full pipeline** (all 5 moves). Numbers: 2,569 leakage instances / $248,314. 123 promo events, 110 measurable. 5 product lines (CHP-AS, CHP-DG, CHP-PS, CHP-SB, CHP-SC). 12 accrual months, +$2.6M net variance.
+
+5. **Slopegraph ranks do NOT flip.** Revenue gaps ($350K–$1.7M between adjacent retailers) are too large for trade cost differences ($20K–$220K) to bridge. Rewrote Section 01 copy: dropped "the lines that cross tell the story" narrative, reframed around gap compression (top 3 gross spread $820K compresses to $586K net, 29% absorption).
+
+**State:** Pipeline output in data/results.db is current against Postgres. Layout copy updated. 17/17 offline tests pass. NOT YET DEPLOYED — awaiting user review of rank result before `fly deploy`.
+
+**Move 1 key figures (new definition):**
+| Retailer | Gross | Trade Cost | Net | Eff Rate |
+|----------|-------|-----------|-----|----------|
+| Walmart | $7,480,454 | $958,702 | $6,521,752 | 12.8% |
+| Costco | $7,021,732 | $738,596 | $6,283,136 | 10.5% |
+| Kroger | $6,660,048 | $723,912 | $5,936,136 | 10.9% |
+| Whole Foods | $5,644,049 | $504,758 | $5,139,291 | 8.9% |
+| Sprouts | $3,900,857 | $396,528 | $3,504,329 | 10.2% |
+| Regional | $1,765,601 | $154,433 | $1,611,168 | 8.7% |
+
+**Next:** User reviews rank result. If approved: `fly deploy`. Then update README if leakage/promo numbers changed (they didn't: $248,314 / 2,569 / 123 promos).
+
+---
+
 ## 2026-06-01
 
 **Started from:** Project complete and client-ready. One open task: fix the compound doc that described the slug_map CTE as the fix when it was actually the bug.

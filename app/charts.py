@@ -33,76 +33,138 @@ from app.constants import (
 
 
 def bump_chart(df: pd.DataFrame, pinned: str | None = None) -> go.Figure:
-    """Gross-revenue rank vs net-revenue rank bump chart.
+    """Gross-to-net revenue slopegraph in dollars.
 
-    One Scatter trace per retailer. x=0 is gross rank, x=1 is net rank.
-    Rank 1 (highest) plotted at the top via reversed y-axis.
+    One Scatter trace per retailer. x=0 is gross revenue, x=1 is net revenue.
+    Lines slope downward showing trade-cost impact; top-3 visibly converge.
+    End labels on the right show retailer name + net value.
     When pinned is set, non-selected retailers dim to 0.2 opacity.
     """
-    df = df.copy()
-    df["gross_rank"] = df["gross_revenue"].rank(ascending=False).astype(int)
-    df["net_rank"] = df["net_revenue"].rank(ascending=False).astype(int)
+    df = df.copy().sort_values("gross_revenue", ascending=False).reset_index(drop=True)
     n = len(df)
 
     fig = go.Figure()
 
     for i, (_, row) in enumerate(df.iterrows()):
         retailer = str(row["retailer"])
+        gross = float(row["gross_revenue"])
+        net = float(row["net_revenue"])
         color = CATEGORICAL[i % len(CATEGORICAL)]
         is_pinned = pinned is not None and retailer == pinned
         opacity = 1.0 if (pinned is None or is_pinned) else 0.2
-        line_width = 2.5 if is_pinned else 1.5
+        line_width = 3.0 if is_pinned else 1.8
 
         fig.add_trace(go.Scatter(
             x=[0, 1],
-            y=[int(row["gross_rank"]), int(row["net_rank"])],
+            y=[gross, net],
             mode="lines+markers",
             name=retailer,
             line=dict(color=color, width=line_width),
-            marker=dict(color=color, size=10),
+            marker=dict(color=color, size=8),
             opacity=opacity,
             customdata=[retailer, retailer],
             hovertemplate=(
                 f"<b>{retailer}</b><br>"
-                "Rank: %{y}<br>"
+                "$%{y:,.0f}<br>"
                 "<extra></extra>"
             ),
         ))
+
+    # End labels on the right side showing retailer name + net dollar value
+    net_values = df.sort_values("net_revenue", ascending=False)
+    for i, (_, row) in enumerate(net_values.iterrows()):
+        retailer = str(row["retailer"])
+        net = float(row["net_revenue"])
+        color_idx = df[df["retailer"] == retailer].index[0]
+        color = CATEGORICAL[color_idx % len(CATEGORICAL)]
+        is_pinned = pinned is not None and retailer == pinned
+        opacity = 1.0 if (pinned is None or is_pinned) else 0.2
+
+        fig.add_annotation(
+            x=1,
+            y=net,
+            text=f"  {retailer}  ${net / 1e6:.1f}M",
+            showarrow=False,
+            xanchor="left",
+            yanchor="middle",
+            font=dict(family=FONT_SANS, size=11, color=color),
+            opacity=opacity,
+            xref="x",
+            yref="y",
+        )
+
+    # --- Top-3 gap compression brackets ---
+    top1 = df.iloc[0]
+    top3 = df.iloc[2]
+    gross_gap = float(top1["gross_revenue"]) - float(top3["gross_revenue"])
+    net_gap = float(top1["net_revenue"]) - float(top3["net_revenue"])
+    compression_pct = (gross_gap - net_gap) / gross_gap * 100 if gross_gap else 0
+
+    bracket_x_left = -0.04
+    bracket_x_right = 1.04
+    bracket_color = REFERENCE
+
+    for bx, y_top, y_bot, label in [
+        (bracket_x_left, float(top1["gross_revenue"]), float(top3["gross_revenue"]),
+         f"${gross_gap / 1e3:.0f}K"),
+        (bracket_x_right, float(top1["net_revenue"]), float(top3["net_revenue"]),
+         f"${net_gap / 1e3:.0f}K"),
+    ]:
+        fig.add_shape(
+            type="line", x0=bx, x1=bx, y0=y_top, y1=y_bot,
+            xref="x", yref="y",
+            line=dict(color=bracket_color, width=1, dash="solid"),
+        )
+        for y_end in (y_top, y_bot):
+            tick_dx = -0.008 if bx < 0.5 else 0.008
+            fig.add_shape(
+                type="line", x0=bx, x1=bx + tick_dx, y0=y_end, y1=y_end,
+                xref="x", yref="y",
+                line=dict(color=bracket_color, width=1),
+            )
+        fig.add_annotation(
+            x=bx, y=(y_top + y_bot) / 2, text=label,
+            showarrow=False,
+            xanchor="right" if bx < 0.5 else "left",
+            yanchor="middle",
+            font=dict(family=FONT_SANS, size=10, color=bracket_color),
+            xref="x", yref="y",
+            xshift=-6 if bx < 0.5 else 6,
+        )
+
+    fig.add_annotation(
+        x=0.5, y=float(top3["gross_revenue"]),
+        text=f"Top-3 gap: ${gross_gap / 1e3:.0f}K → ${net_gap / 1e3:.0f}K ({compression_pct:-.0f}%)",
+        showarrow=False,
+        yanchor="top", yshift=-14,
+        font=dict(family=FONT_SANS, size=10, color=bracket_color),
+        xref="x", yref="y",
+    )
 
     fig.update_layout(
         template="simple_white",
         paper_bgcolor=CANVAS,
         plot_bgcolor=CANVAS,
-        height=420,
-        margin=dict(l=20, r=120, t=20, b=60),
+        height=460,
+        margin=dict(l=80, r=180, t=20, b=60),
         xaxis=dict(
             tickmode="array",
             tickvals=[0, 1],
-            ticktext=["By Gross Revenue", "By Net Revenue"],
+            ticktext=["Gross Revenue", "Net Revenue"],
             tickfont=dict(family=FONT_SANS, size=13, color=TEXT_SECONDARY),
             showgrid=False,
             zeroline=False,
-            range=[-0.15, 1.25],
+            range=[-0.12, 1.08],
         ),
         yaxis=dict(
-            autorange="reversed",
-            tickmode="linear",
-            tick0=1,
-            dtick=1,
-            tickfont=dict(family=FONT_SANS, size=12, color=TEXT_SECONDARY),
+            tickprefix="$",
+            tickformat=",.0f",
+            tickfont=dict(family=FONT_SANS, size=11, color=TEXT_SECONDARY),
             gridcolor=GRIDLINE,
             zeroline=False,
-            title=dict(text="Rank", font=dict(family=FONT_SANS, size=13, color=TEXT_SECONDARY)),
+            title=dict(text="Revenue", font=dict(family=FONT_SANS, size=13, color=TEXT_SECONDARY)),
         ),
-        showlegend=True,
-        legend=dict(
-            x=1.02,
-            y=0.5,
-            xanchor="left",
-            yanchor="middle",
-            font=dict(family=FONT_SANS, size=12, color=INK),
-            bgcolor="rgba(0,0,0,0)",
-        ),
+        showlegend=False,
         font=dict(family=FONT_SANS, size=13, color=INK),
         hoverlabel=dict(bgcolor=CANVAS, font_family=FONT_SANS),
     )

@@ -111,9 +111,11 @@ def _section_net_revenue(df: pd.DataFrame) -> html.Div:
         ], style={"marginBottom": "10px"}),
 
         html.P(
-            "Trade spend changes the revenue story. Retailers that appear "
-            "largest by gross revenue may fall significantly when structural "
-            "channel discounts are applied. The lines that cross tell the story.",
+            "Trade costs compress the gaps between retailers. Walmart, "
+            "Costco, and Kroger are separated by $820K on gross revenue "
+            "but $586K on net — a 29% compression from structural trade "
+            "rates and operational deductions. Click a retailer to see "
+            "the breakdown.",
             style={
                 "fontFamily": FONT_SANS,
                 "fontSize": "17px",
@@ -135,9 +137,11 @@ def _section_net_revenue(df: pd.DataFrame) -> html.Div:
         ),
 
         footnote(
-            "Structural trade spend rate applied per channel from negotiated rate card in sku_costs. "
-            "Regional chains (Green Basket Market, Southside Grocers, Fresh Mart, Natural Harvest) "
-            "use a blended regional rate. Trailing 52 weeks of scan data."
+            "Net revenue = gross revenue − structural trade spend − operational deductions. "
+            "Structural rates from negotiated rate card in sku_costs. Operational deductions "
+            "(damaged, spoilage, late delivery, short ship, label/pallet fines, pricing errors) "
+            "from retailer_deductions; promo billbacks and slotting excluded to avoid "
+            "double-counting with the structural rate. Trailing 52 weeks."
         ),
     ], id="section-net-revenue", style={"marginBottom": SECTION_GAP})
 
@@ -183,9 +187,10 @@ def _section_efficiency(df: pd.DataFrame) -> html.Div:
         html.P(
             "Not all trade spend is equally productive. The left panel shows "
             "each retailer's structural trade rate — the share of gross revenue "
-            "consumed before a dollar reaches the bottom line. Orange bars exceed "
-            "the 17% specialty food average. The right panel shows revenue generated "
-            "per promotional dollar invested during promotional periods.",
+            "consumed before a dollar reaches the bottom line. All six retailers "
+            "fall well below the 17% specialty food average. The right panel shows "
+            "revenue generated per promotional dollar invested during promotional "
+            "periods.",
             style={
                 "fontFamily": FONT_SANS,
                 "fontSize": "17px",
