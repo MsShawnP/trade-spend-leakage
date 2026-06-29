@@ -181,3 +181,31 @@ failed and may have its own entry below]
 **Status:** Resolved.
 
 **Tags:** charts, edit-tool, duplication, insertion-point, charts.py
+
+---
+
+### 2026-06-29 — fly deploy served old data after rolling deployment put both machines in stopped state
+
+**Attempted:** Ran `fly deploy` to push the updated results.db and code. Deployment reported success. Verified via `/_dash-layout` JSON — the live site still served old Move 1 figures (pre-Kroger-fix, pre-deductions).
+
+**Why it didn't work:** The rolling deployment stopped the old machine before the new one was fully ready, or the autostart routing served a cached old image. Both machines ended up in stopped state. The machine that autostarts on the next request may have used a stale image layer.
+
+**What we tried instead:** Identified the active machine via `fly machines list`, then `fly machines restart 68349d1c404e18`. After restart, verified the live endpoint returned updated figures. The key lesson: after `fly deploy` with suspend+autostart, always verify the live endpoint — don't trust the deploy success message alone.
+
+**Status:** Resolved.
+
+**Tags:** fly, deploy, autostart, stale-data, results.db, verification, rolling-deploy
+
+---
+
+### 2026-06-29 — Wrote Section 01 copy numbers before computing them from data
+
+**Attempted:** Wrote the Section 01 gap-compression copy ("$1.5M gross spread compresses to...") based on rough estimates, before running the actual pipeline numbers through the rewritten Move 1 definition.
+
+**Why it didn't work:** The actual top-3 gross spread was $820K, not $1.5M. After the Kroger rate fix, the net spread also changed. The copy had to be rewritten twice — once after the initial pipeline run, and again after the Kroger fix changed the net figures. Each iteration required reading the data, updating the copy, and re-verifying.
+
+**What we tried instead:** Compute the numbers from data first, then write copy. For Section 01, pulled the exact values from results.db (`SELECT retailer, gross_revenue, net_revenue FROM results_net_revenue ORDER BY gross_revenue DESC LIMIT 3`), computed the gap and compression percentage, then wrote the copy to match. The bracket annotations in the chart also pull values from data at render time — no hard-coded numbers.
+
+**Status:** Resolved. Rule: never write copy that cites specific dollar amounts or percentages before the underlying data is final.
+
+**Tags:** copy, data-first, section-01, gap-compression, move1, verification-order

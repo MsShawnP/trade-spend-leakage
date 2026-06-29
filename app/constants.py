@@ -2,80 +2,98 @@
 
 from __future__ import annotations
 
-# Lailara Design System v2 — color tokens
-CANVAS = "#f5f3ee"
-INK = "#0d0d0d"
-TEXT_PRIMARY = "#333333"
-TEXT_SECONDARY = "#595959"
-GRIDLINE = "#d9d9d9"
-REFERENCE = "#666666"
-DISABLED = "#b3b3b3"
+from lailara_palette import (
+    LL_CANVAS,
+    LL_CAT_10,
+    LL_CHICAGO,
+    LL_CHICAGO_HOVER,
+    LL_CHICAGO_LIGHT,
+    LL_DISABLED,
+    LL_GRIDLINE,
+    LL_HK,
+    LL_HK_DARK,
+    LL_HK_LIGHT,
+    LL_INK,
+    LL_RED,
+    LL_REFERENCE,
+    LL_SEQ,
+    LL_SG,
+    LL_TEXT,
+    LL_TEXT_SEC,
+    LL_TOKYO,
+    LL_CARD_BG,
+    LL_CARD_TEXT,
+    LL_CARD_SUBTITLE,
+    LL_CARD_MUTED,
+    LL_CARD_BORDER,
+    LL_CARD_ITEM,
+    LL_HK_SURFACE,
+    LL_SG_SURFACE,
+    LL_RED_SURFACE,
+    LL_CHICAGO_SURFACE,
+)
 
-NAVY = "#1f2e7a"
-NAVY_HOVER = "#141e52"
-NAVY_LIGHT = "#8e9ad0"
+# Lailara Design System v2 — color tokens (sourced from lailara_palette)
+CANVAS = LL_CANVAS
+INK = LL_INK
+TEXT_PRIMARY = LL_TEXT
+TEXT_SECONDARY = LL_TEXT_SEC
+GRIDLINE = LL_GRIDLINE
+REFERENCE = LL_REFERENCE
+DISABLED = LL_DISABLED
 
-RED = "#cc100a"
+NAVY = LL_CHICAGO
+NAVY_HOVER = LL_CHICAGO_HOVER
+NAVY_LIGHT = LL_CHICAGO_LIGHT
 
-# Hong Kong sequential teal (darkest → lightest usable data stop)
+RED = LL_RED
+
+# Hong Kong sequential teal (darkest -> lightest usable data stop)
 HK = {
-    5: "#063d32",
-    15: "#0a5c4b",
-    25: "#0e6e5a",
-    35: "#158f75",
-    45: "#1fa282",
-    55: "#35b595",
-    70: "#6dcdb5",
-    85: "#b5e4d8",
+    5: LL_SEQ[0],
+    15: LL_SEQ[1],
+    25: LL_SEQ[2],
+    35: LL_SEQ[3],
+    45: LL_SEQ[4],
+    55: LL_SEQ[5],
+    70: LL_SEQ[6],
+    85: LL_SEQ[7],
 }
-HK_DEFAULT = HK[35]
+HK_DEFAULT = LL_HK
 
 # Singapore orange (warning)
-SG_DEFAULT = "#ee8a2a"
+SG_DEFAULT = LL_SG
 
 # Tokyo berry/rose (risk, negative)
-TOKYO_DEFAULT = "#b82d4a"
+TOKYO_DEFAULT = LL_TOKYO
 
 # Semantic status
-PASS_BG = "#e4f5f0"
+PASS_BG = LL_HK_SURFACE
 PASS_TEXT = "#0e6e5a"
-WARN_BG = "#fdeee0"
+WARN_BG = LL_SG_SURFACE
 WARN_TEXT = "#7a3d10"
-FAIL_BG = "#fde8e7"
+FAIL_BG = LL_RED_SURFACE
 FAIL_TEXT = "#7a0906"
-INFO_BG = "#e5e8f5"
+INFO_BG = LL_CHICAGO_SURFACE
 INFO_TEXT = NAVY
 
 # Dark callout card
-CARD_BG = "#1a1a1a"
-CARD_TEXT = "#ffffff"
-CARD_SUBTITLE = "#d8d8d8"
-CARD_MUTED = "#9a9a9a"
-CARD_BORDER = "rgba(255,255,255,0.12)"
-CARD_ITEM_TEXT = "#ededed"
+CARD_BG = LL_CARD_BG
+CARD_TEXT = LL_CARD_TEXT
+CARD_SUBTITLE = LL_CARD_SUBTITLE
+CARD_MUTED = LL_CARD_MUTED
+CARD_BORDER = LL_CARD_BORDER
+CARD_ITEM_TEXT = LL_CARD_ITEM
 
 # Layout
 CONTENT_MAX_WIDTH = "900px"
 SECTION_GAP = "60px"
 BORDER_RADIUS = "2px"
 
-# Categorical palette for charts (retailers)
-# Chicago navy + Hong Kong teal sequence, 11 slots for 11 retailers
-CATEGORICAL = [
-    NAVY,
-    HK[35],
-    HK[55],
-    NAVY_LIGHT,
-    HK[70],
-    HK[25],
-    HK[15],
-    HK[45],
-    HK[85],
-    SG_DEFAULT,
-    TOKYO_DEFAULT,
-]
+# Categorical palette for charts — LL_CAT_10 paired system, first 6 slots
+CATEGORICAL = LL_CAT_10[:6]
 
-# Retailer slug → display name mapping
+# Retailer slug -> display name mapping
 RETAILER_DISPLAY = {
     "walmart": "Walmart",
     "costco": "Costco",
@@ -99,7 +117,7 @@ REGIONAL_RETAILERS = {
     "regional",
 }
 
-# Channel → sku_costs column name
+# Channel -> sku_costs column name
 CHANNEL_RATE_COLS = {
     "walmart": "trade_spend_pct_walmart",
     "costco": "trade_spend_pct_costco",

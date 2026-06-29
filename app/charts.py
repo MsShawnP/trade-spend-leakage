@@ -71,7 +71,14 @@ def bump_chart(df: pd.DataFrame, pinned: str | None = None) -> go.Figure:
         ))
 
     # End labels on the right side showing retailer name + net dollar value
-    net_values = df.sort_values("net_revenue", ascending=False)
+    # Deconflict close labels by nudging y positions apart
+    net_values = df.sort_values("net_revenue", ascending=False).reset_index(drop=True)
+    label_positions = [float(row["net_revenue"]) for _, row in net_values.iterrows()]
+    min_gap = (max(label_positions) - min(label_positions)) * 0.045 if len(label_positions) > 1 else 0
+    for i in range(1, len(label_positions)):
+        if label_positions[i - 1] - label_positions[i] < min_gap:
+            label_positions[i] = label_positions[i - 1] - min_gap
+
     for i, (_, row) in enumerate(net_values.iterrows()):
         retailer = str(row["retailer"])
         net = float(row["net_revenue"])
@@ -82,7 +89,7 @@ def bump_chart(df: pd.DataFrame, pinned: str | None = None) -> go.Figure:
 
         fig.add_annotation(
             x=1,
-            y=net,
+            y=label_positions[i],
             text=f"  {retailer}  ${net / 1e6:.1f}M",
             showarrow=False,
             xanchor="left",
@@ -133,12 +140,13 @@ def bump_chart(df: pd.DataFrame, pinned: str | None = None) -> go.Figure:
         )
 
     fig.add_annotation(
-        x=0.5, y=float(top3["gross_revenue"]),
+        x=0.0, y=1.0,
         text=f"Top-3 gap: ${gross_gap / 1e3:.0f}K → ${net_gap / 1e3:.0f}K ({compression_pct:-.0f}%)",
         showarrow=False,
-        yanchor="top", yshift=-14,
-        font=dict(family=FONT_SANS, size=10, color=bracket_color),
-        xref="x", yref="y",
+        xanchor="left", yanchor="bottom",
+        font=dict(family=FONT_SANS, size=11, color=bracket_color),
+        xref="paper", yref="paper",
+        yshift=4,
     )
 
     fig.update_layout(
@@ -366,22 +374,19 @@ def efficiency_chart(df: pd.DataFrame) -> go.Figure:
     retailers = df["retailer"].tolist()
     n = len(retailers)
 
-    # --- Left panel colors: HK teal gradient (darkest = lowest % = most efficient)
-    # Fall back to SG orange for any retailer above the specialty food average.
+    # --- Left panel colors: HK teal gradient (darkest = largest value)
     trade_pcts = [float(row["trade_spend_pct"]) for _, row in df.iterrows()]
     tsp_min = min(trade_pcts) if trade_pcts else 0
     tsp_max = max(trade_pcts) if trade_pcts else 1
 
+    hk_trade_stops = [HK[85], HK[70], HK[55], HK[35], HK[25], HK[15], HK[5]]
+
     def _trade_color(pct: float) -> str:
-        if pct > _HIGH_TRADE_SPEND_PCT:
-            return SG_DEFAULT
         if tsp_max == tsp_min:
             return HK_DEFAULT
-        # Lower % → darker teal (more efficient)
-        normalized = (pct - tsp_min) / (tsp_max - tsp_min)  # 0 = best, 1 = worst
-        stops = [HK[5], HK[15], HK[25], HK[35], HK[55], HK[70], HK[85]]
-        idx = min(int(normalized * len(stops)), len(stops) - 1)
-        return stops[idx]
+        normalized = (pct - tsp_min) / (tsp_max - tsp_min)
+        idx = min(int(normalized * len(hk_trade_stops)), len(hk_trade_stops) - 1)
+        return hk_trade_stops[idx]
 
     trade_colors = [_trade_color(p) for p in trade_pcts]
     trade_text = [f"{p:.1%}" for p in trade_pcts]
@@ -395,18 +400,16 @@ def efficiency_chart(df: pd.DataFrame) -> go.Figure:
     else:
         lift_min = lift_max = 0.0
 
-    hk_stops = [HK[5], HK[15], HK[25], HK[35], HK[45], HK[55], HK[70], HK[85]]
+    hk_lift_stops = [HK[85], HK[70], HK[55], HK[35], HK[25], HK[15], HK[5]]
 
     def _lift_color(val, measurable_flag: int) -> str:
         if not measurable_flag or val is None or pd.isna(val):
             return DISABLED
         if lift_max == lift_min:
             return HK_DEFAULT
-        # Higher lift → darker teal (more efficient)
         normalized = (float(val) - lift_min) / (lift_max - lift_min)
-        idx = min(int(normalized * len(hk_stops)), len(hk_stops) - 1)
-        # Invert: highest value gets darkest (index 0)
-        return hk_stops[len(hk_stops) - 1 - idx]
+        idx = min(int(normalized * len(hk_lift_stops)), len(hk_lift_stops) - 1)
+        return hk_lift_stops[idx]
 
     lift_colors = [
         _lift_color(row["revenue_per_promo_dollar"], int(row["lift_measurable"]))
