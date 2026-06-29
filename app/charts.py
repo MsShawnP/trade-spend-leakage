@@ -7,29 +7,29 @@ import plotly.graph_objects as go
 from dash import html
 from plotly.subplots import make_subplots
 
+from lailara_palette import LL_CHICAGO_SURFACE
+
 from app.constants import (
     CANVAS,
     CATEGORICAL,
     DISABLED,
     FONT_SANS,
-    FONT_SERIF,
     GRIDLINE,
     HK,
     HK_DEFAULT,
     INK,
     NAVY,
-    RED,
     REFERENCE,
     TEXT_PRIMARY,
     TEXT_SECONDARY,
     TOKYO_DEFAULT,
-    SG_DEFAULT,
     PASS_BG,
     PASS_TEXT,
     WARN_BG,
     WARN_TEXT,
-    NAVY_LIGHT,
 )
+
+CHICAGO_SURFACE = LL_CHICAGO_SURFACE
 
 
 def bump_chart(df: pd.DataFrame, pinned: str | None = None) -> go.Figure:
@@ -74,7 +74,7 @@ def bump_chart(df: pd.DataFrame, pinned: str | None = None) -> go.Figure:
     # Deconflict close labels by nudging y positions apart
     net_values = df.sort_values("net_revenue", ascending=False).reset_index(drop=True)
     label_positions = [float(row["net_revenue"]) for _, row in net_values.iterrows()]
-    min_gap = (max(label_positions) - min(label_positions)) * 0.045 if len(label_positions) > 1 else 0
+    min_gap = (max(label_positions) - min(label_positions)) * 0.065 if len(label_positions) > 1 else 0
     for i in range(1, len(label_positions)):
         if label_positions[i - 1] - label_positions[i] < min_gap:
             label_positions[i] = label_positions[i - 1] - min_gap
@@ -108,7 +108,7 @@ def bump_chart(df: pd.DataFrame, pinned: str | None = None) -> go.Figure:
     compression_pct = (gross_gap - net_gap) / gross_gap * 100 if gross_gap else 0
 
     bracket_x_left = -0.04
-    bracket_x_right = 1.04
+    bracket_x_right = 1.18
     bracket_color = REFERENCE
 
     for bx, y_top, y_bot, label in [
@@ -154,7 +154,7 @@ def bump_chart(df: pd.DataFrame, pinned: str | None = None) -> go.Figure:
         paper_bgcolor=CANVAS,
         plot_bgcolor=CANVAS,
         height=460,
-        margin=dict(l=80, r=180, t=20, b=60),
+        margin=dict(l=80, r=220, t=20, b=60),
         xaxis=dict(
             tickmode="array",
             tickvals=[0, 1],
@@ -162,7 +162,7 @@ def bump_chart(df: pd.DataFrame, pinned: str | None = None) -> go.Figure:
             tickfont=dict(family=FONT_SANS, size=13, color=TEXT_SECONDARY),
             showgrid=False,
             zeroline=False,
-            range=[-0.12, 1.08],
+            range=[-0.12, 1.22],
         ),
         yaxis=dict(
             tickprefix="$",
@@ -207,7 +207,7 @@ _LEDGER_CELL_STYLE = {
     "fontSize": "14px",
     "color": TEXT_PRIMARY,
     "padding": "10px 12px",
-    "borderBottom": "1px solid #e8e6e1",
+    "borderBottom": f"1px solid {GRIDLINE}",
     "verticalAlign": "middle",
 }
 
@@ -232,7 +232,7 @@ def leakage_ledger(df: pd.DataFrame, pinned: str | None = None) -> html.Div:
     for _, row in df.iterrows():
         ltype = str(row["leakage_type"])
         is_pinned = pinned == ltype
-        bg = "#e8eaf3" if is_pinned else "transparent"
+        bg = CHICAGO_SURFACE if is_pinned else "transparent"
         border_left = f"3px solid {NAVY}" if is_pinned else "3px solid transparent"
 
         cls_chip = row.get("classification", "")
@@ -325,7 +325,7 @@ def leakage_instances_grid(df: pd.DataFrame) -> "dash_ag_grid.AgGrid":
         {"field": "variance",      "headerName": "Variance ($)",    "width": 120,
          "type": "numericColumn",
          "valueFormatter": {"function": "params.value != null ? '$' + params.value.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—'"},
-         "cellStyle": {"function": "params.value > 0 ? {'color': '#b82d4a'} : {}"}},
+         "cellStyle": {"function": f"params.value > 0 ? {{'color': '{TOKYO_DEFAULT}'}} : {{}}"}},
         {"field": "classification", "headerName": "Classification", "width": 140},
     ]
 
