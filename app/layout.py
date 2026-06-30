@@ -11,6 +11,7 @@ from app.constants import (
     APP_SUBTITLE,
     APP_TITLE,
     CANVAS,
+    CARD_TEXT,
     CONTENT_MAX_WIDTH,
     FONT_SANS,
     FONT_SERIF,
@@ -70,7 +71,7 @@ def _brand_header() -> html.Div:
                 id="btn-download-workbook",
                 style={
                     "backgroundColor": NAVY,
-                    "color": "#ffffff",
+                    "color": CARD_TEXT,
                     "border": "none",
                     "borderRadius": "2px",
                     "padding": "10px 20px",

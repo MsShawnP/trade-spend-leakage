@@ -18,6 +18,7 @@ from lailara_palette import (
     LL_REFERENCE,
     LL_SEQ,
     LL_SG,
+    LL_STATUS,
     LL_TEXT,
     LL_TEXT_SEC,
     LL_TOKYO,
@@ -69,11 +70,11 @@ TOKYO_DEFAULT = LL_TOKYO
 
 # Semantic status
 PASS_BG = LL_HK_SURFACE
-PASS_TEXT = "#0e6e5a"
+PASS_TEXT = LL_STATUS["pass"]["text"]
 WARN_BG = LL_SG_SURFACE
-WARN_TEXT = "#7a3d10"
+WARN_TEXT = LL_STATUS["warn"]["text"]
 FAIL_BG = LL_RED_SURFACE
-FAIL_TEXT = "#7a0906"
+FAIL_TEXT = LL_STATUS["fail"]["text"]
 INFO_BG = LL_CHICAGO_SURFACE
 INFO_TEXT = NAVY
 
