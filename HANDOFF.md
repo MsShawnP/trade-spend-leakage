@@ -5,6 +5,24 @@ session end.
 
 ---
 
+## 2026-06-30
+
+**Started from:** Prior session fixed chart colors (lailara_palette migration, paired categorical palette, HK gradient, Tokyo/HK divergent scatter, ad-hoc hex sweep) and added slopegraph label deconfliction + bracket annotations. Brackets still collided with y-axis ticks and end labels.
+
+**Did:**
+
+1. **Removed bracket annotations from Section 01 slopegraph:** Deleted the entire bracket block from `bump_chart()` — vertical bracket shapes, tick marks, "$820K"/"$586K" dollar labels, and "Top-3 gap..." caption (49 lines removed). Compression story is already in the Section 01 body copy and visible in the converging lines.
+
+2. **Tightened chart margins:** Right margin 220→180, x-range [-0.12, 1.22] → [-0.05, 1.08], left margin 80→60 — brackets no longer need the extra room.
+
+3. **Verified clean:** Screenshot confirms no brackets, no gap caption, no label collisions. 17/17 offline tests pass. Deployed to Fly.io.
+
+**State:** Dashboard live at https://trade-spend.lailarallc.com/. All committed and pushed. Section 01 is clean: six paired-palette lines, per-retailer end labels, dollar y-axis, footnote. No open tasks.
+
+**Next:** No active tasks. Next `/improve` due 2026-07-01.
+
+---
+
 ## 2026-06-29
 
 **Started from:** Project deployed but serving stale results.db. Prompted to re-run pipeline, fix Section 02 copy bug, and investigate flat slopegraph.

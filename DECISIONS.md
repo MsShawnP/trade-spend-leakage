@@ -117,6 +117,11 @@ Each entry:
 - **Scope:** `app/layout.py` Section 01 copy and footnote.
 - **Do not:** Hard-code aspirational rank flip narratives. The chart shows whatever the data produces.
 
+### 2026-06-30 — Remove bracket annotations from Section 01 slopegraph; compression story lives in prose
+- **Why:** The left/right vertical brackets, "$820K"/"$586K" dollar labels, and "Top-3 gap..." caption collided with y-axis ticks and end labels even after adjusting positions. The body copy already states the $820K → $586K / 29% compression, and the converging lines show it visually — the annotations were redundant. Removing them also let the right margin shrink from 220→180 and x-range from 1.22→1.08.
+- **Scope:** `app/charts.py` `bump_chart()`.
+- **Do not:** Re-add chart-level gap annotations. If the compression numbers change, update the Section 01 body copy in `app/layout.py`.
+
 ### 2026-05-31 — results.db is pre-generated locally and baked into the Docker image via COPY
 - **Why:** Fly Depot build servers don't have access to the Fly private network, so the pipeline can't connect to `cinderhaven-db.internal` during `fly deploy`. Pre-generating locally and including via `COPY` is simpler and equally reliable for synthetic data that doesn't change frequently.
 - **Scope:** trade-spend-leakage Dockerfile and deployment process
