@@ -100,61 +100,12 @@ def bump_chart(df: pd.DataFrame, pinned: str | None = None) -> go.Figure:
             yref="y",
         )
 
-    # --- Top-3 gap compression brackets ---
-    top1 = df.iloc[0]
-    top3 = df.iloc[2]
-    gross_gap = float(top1["gross_revenue"]) - float(top3["gross_revenue"])
-    net_gap = float(top1["net_revenue"]) - float(top3["net_revenue"])
-    compression_pct = (gross_gap - net_gap) / gross_gap * 100 if gross_gap else 0
-
-    bracket_x_left = -0.04
-    bracket_x_right = 1.18
-    bracket_color = REFERENCE
-
-    for bx, y_top, y_bot, label in [
-        (bracket_x_left, float(top1["gross_revenue"]), float(top3["gross_revenue"]),
-         f"${gross_gap / 1e3:.0f}K"),
-        (bracket_x_right, float(top1["net_revenue"]), float(top3["net_revenue"]),
-         f"${net_gap / 1e3:.0f}K"),
-    ]:
-        fig.add_shape(
-            type="line", x0=bx, x1=bx, y0=y_top, y1=y_bot,
-            xref="x", yref="y",
-            line=dict(color=bracket_color, width=1, dash="solid"),
-        )
-        for y_end in (y_top, y_bot):
-            tick_dx = -0.008 if bx < 0.5 else 0.008
-            fig.add_shape(
-                type="line", x0=bx, x1=bx + tick_dx, y0=y_end, y1=y_end,
-                xref="x", yref="y",
-                line=dict(color=bracket_color, width=1),
-            )
-        fig.add_annotation(
-            x=bx, y=(y_top + y_bot) / 2, text=label,
-            showarrow=False,
-            xanchor="right" if bx < 0.5 else "left",
-            yanchor="middle",
-            font=dict(family=FONT_SANS, size=10, color=bracket_color),
-            xref="x", yref="y",
-            xshift=-6 if bx < 0.5 else 6,
-        )
-
-    fig.add_annotation(
-        x=0.0, y=1.0,
-        text=f"Top-3 gap: ${gross_gap / 1e3:.0f}K → ${net_gap / 1e3:.0f}K ({compression_pct:-.0f}%)",
-        showarrow=False,
-        xanchor="left", yanchor="bottom",
-        font=dict(family=FONT_SANS, size=11, color=bracket_color),
-        xref="paper", yref="paper",
-        yshift=4,
-    )
-
     fig.update_layout(
         template="simple_white",
         paper_bgcolor=CANVAS,
         plot_bgcolor=CANVAS,
         height=460,
-        margin=dict(l=80, r=220, t=20, b=60),
+        margin=dict(l=60, r=180, t=20, b=60),
         xaxis=dict(
             tickmode="array",
             tickvals=[0, 1],
@@ -162,7 +113,7 @@ def bump_chart(df: pd.DataFrame, pinned: str | None = None) -> go.Figure:
             tickfont=dict(family=FONT_SANS, size=13, color=TEXT_SECONDARY),
             showgrid=False,
             zeroline=False,
-            range=[-0.12, 1.22],
+            range=[-0.05, 1.08],
         ),
         yaxis=dict(
             tickprefix="$",
