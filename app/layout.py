@@ -64,6 +64,19 @@ def _brand_header() -> html.Div:
             "color": TEXT_SECONDARY,
             "marginTop": "2px",
         }),
+        html.P(
+            "Find the money leaking out of promotions, then rerank retailers "
+            "by what they actually pay.",
+            style={
+                "fontFamily": FONT_SANS,
+                "fontSize": "16px",
+                "color": TEXT_PRIMARY,
+                "lineHeight": "1.5",
+                "maxWidth": "620px",
+                "marginTop": "14px",
+                "marginBottom": "0",
+            },
+        ),
         html.Hr(style={"borderTop": f"1px solid {GRIDLINE}", "marginTop": "20px"}),
         html.Div([
             html.Button(
@@ -90,6 +103,41 @@ def _brand_header() -> html.Div:
 # Move 1 — Net Revenue Ranking
 # ---------------------------------------------------------------------------
 
+def _compression_lead(df: pd.DataFrame) -> str:
+    """Narrative lead for Move 1, with figures derived from the rendered data.
+
+    Compares the top three retailers by gross revenue: how far apart they sit
+    on gross versus on net, and the resulting compression from trade costs.
+    Falls back to a figure-free sentence when fewer than three retailers are
+    present or the spread is degenerate.
+    """
+    generic = (
+        "Trade costs compress the gaps between retailers — structural trade "
+        "rates and operational deductions narrow the distance between the top "
+        "accounts. Click a retailer to see the breakdown."
+    )
+    if df.empty or len(df) < 3:
+        return generic
+
+    top3 = df.sort_values("gross_revenue", ascending=False).head(3)
+    gross_spread = float(top3["gross_revenue"].max() - top3["gross_revenue"].min())
+    net_spread = float(top3["net_revenue"].max() - top3["net_revenue"].min())
+    if gross_spread <= 0:
+        return generic
+
+    compression = (gross_spread - net_spread) / gross_spread
+    names = [str(n) for n in top3["retailer"].tolist()]
+    names_str = f"{', '.join(names[:-1])}, and {names[-1]}"
+
+    return (
+        f"Trade costs compress the gaps between retailers. {names_str} are "
+        f"separated by ${gross_spread / 1e3:,.0f}K on gross revenue but "
+        f"${net_spread / 1e3:,.0f}K on net — a {compression:.0%} compression "
+        f"from structural trade rates and operational deductions. Click a "
+        f"retailer to see the breakdown."
+    )
+
+
 def _section_net_revenue(df: pd.DataFrame) -> html.Div:
     initial_fig = bump_chart(df)
 
@@ -112,11 +160,7 @@ def _section_net_revenue(df: pd.DataFrame) -> html.Div:
         ], style={"marginBottom": "10px"}),
 
         html.P(
-            "Trade costs compress the gaps between retailers. Walmart, "
-            "Costco, and Kroger are separated by $820K on gross revenue "
-            "but $586K on net — a 29% compression from structural trade "
-            "rates and operational deductions. Click a retailer to see "
-            "the breakdown.",
+            _compression_lead(df),
             style={
                 "fontFamily": FONT_SANS,
                 "fontSize": "17px",
@@ -187,9 +231,9 @@ def _section_efficiency(df: pd.DataFrame) -> html.Div:
 
         html.P(
             "Not all trade spend is equally productive. The left panel shows "
-            "each retailer's structural trade rate — the share of gross revenue "
-            "consumed before a dollar reaches the bottom line. All six retailers "
-            "fall well below the 17% specialty food average. The right panel shows "
+            "each retailer's total trade spend as a share of gross revenue — "
+            "structural rate-card discounts plus every operational deduction "
+            "taken before a dollar reaches the bottom line. The right panel shows "
             "revenue generated per promotional dollar invested during promotional "
             "periods.",
             style={
@@ -205,11 +249,12 @@ def _section_efficiency(df: pd.DataFrame) -> html.Div:
         *chart_content,
 
         footnote(
-            "Trade spend % from structural rate card in sku_costs, trailing 52 weeks. "
-            "Revenue per promo dollar: total scan revenue across all stores during "
-            "promotional periods ÷ total promo cost. Overlapping promo weeks are "
-            "counted once. Does not adjust for baseline — see Move 4 for incremental lift. "
-            "Dashed reference line at 17% (specialty food structural average)."
+            "Total trade spend % = structural rate-card spend plus operational "
+            "deductions (damaged, spoilage, late delivery, fines), trailing 52 weeks, "
+            "as computed in Move 1. Revenue per promo dollar: total scan revenue "
+            "across all stores during promotional periods ÷ total promo cost. "
+            "Overlapping promo weeks are counted once. Does not adjust for baseline — "
+            "see Move 4 for incremental lift."
         ),
     ], id="section-efficiency", style={"marginBottom": SECTION_GAP})
 
@@ -337,8 +382,12 @@ def _section_promo_roi(df: pd.DataFrame) -> html.Div:
             f"Baseline estimated from 8-week rolling median of weekly scan revenue "
             f"for the promoted SKU × retailer. {measurable} of {total} promotions "
             f"have sufficient pre-promotion data. Incremental revenue = promo-period "
-            f"scan revenue minus expected baseline. Break-even line: promo cost = "
-            f"incremental revenue. Gray points lack sufficient baseline data."
+            f"scan revenue minus expected baseline. The break-even line (promo cost = "
+            f"incremental revenue) treats incremental revenue as fully marginal: it "
+            f"omits COGS, which the Cinderhaven schema does not carry, so a promotion "
+            f"only breaks even here at 100% gross margin. Applying a real SKU gross "
+            f"margin would raise every break-even threshold. Gray points lack "
+            f"sufficient baseline data."
         ),
     ], id="section-promo-roi", style={"marginBottom": SECTION_GAP})
 

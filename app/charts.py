@@ -304,16 +304,12 @@ def leakage_instances_grid(df: pd.DataFrame) -> "dash_ag_grid.AgGrid":
 # Trade Spend Efficiency — dual-panel horizontal bar chart
 # ---------------------------------------------------------------------------
 
-# Threshold for "high" trade spend — specialty food structural average
-_HIGH_TRADE_SPEND_PCT = 0.17
-
-
 def efficiency_chart(df: pd.DataFrame) -> go.Figure:
     """Two-panel horizontal bar chart for Move 2 trade spend efficiency.
 
-    Left panel: Trade spend as % of gross revenue.
-      Bars colored SG orange when above the 17% specialty food average,
-      HK teal when at or below it.
+    Left panel: Total trade spend (structural rate-card spend + operational
+      deductions) as % of gross revenue. Bars colored on an HK teal gradient
+      (darker = larger share).
 
     Right panel: Revenue per promo dollar (promo-period scan revenue ÷ total
       promo cost). Bars colored on HK teal scale; DISABLED gray for retailers
@@ -385,7 +381,7 @@ def efficiency_chart(df: pd.DataFrame) -> go.Figure:
         column_widths=[0.5, 0.5],
         horizontal_spacing=0.06,
         subplot_titles=[
-            "Trade Spend as % of Revenue",
+            "Total Trade Spend as % of Revenue",
             "Revenue per Promo Dollar Invested",
         ],
     )
@@ -420,13 +416,6 @@ def efficiency_chart(df: pd.DataFrame) -> go.Figure:
             hovertemplate="%{y}: %{text}<extra></extra>",
         ),
         row=1, col=2,
-    )
-
-    # Reference line at 17% threshold on left panel
-    fig.add_vline(
-        x=_HIGH_TRADE_SPEND_PCT,
-        line=dict(color=REFERENCE, dash="dash", width=1.5),
-        row=1, col=1,
     )
 
     row_height = max(48, 320 // max(n, 1))

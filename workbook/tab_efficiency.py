@@ -1,4 +1,4 @@
-"""Tab 4: Trade Spend Efficiency — structural trade rate and promo revenue per dollar."""
+"""Tab 4: Trade Spend Efficiency — total trade spend rate and promo revenue per dollar."""
 
 from __future__ import annotations
 
@@ -6,7 +6,6 @@ import sqlite3
 from datetime import date
 from pathlib import Path
 
-from openpyxl.formatting.rule import CellIsRule
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.table import Table
@@ -16,8 +15,6 @@ from workbook.styles import (
     ALIGN_CENTER,
     ALIGN_LEFT,
     ALIGN_RIGHT,
-    FILL_BAD,
-    FILL_GOOD,
     FONT_BODY,
     FONT_HEADER,
     FONT_SECTION,
@@ -29,7 +26,6 @@ from workbook.styles import (
 )
 
 _PLACEHOLDER = "Not yet computed — run the pipeline first."
-_SPECIALTY_AVG = 0.17
 
 
 def _read(db_path: Path) -> list[tuple] | None:
@@ -63,8 +59,9 @@ def build_efficiency(ws: Worksheet, db_path: Path) -> None:
 
     ws.merge_cells("B2:I2")
     ws["B2"] = (
-        "Structural trade rate per retailer (share of gross revenue consumed by contracted discounts) "
-        f"and revenue generated per promotional dollar. Reference: {_SPECIALTY_AVG:.0%} specialty food average."
+        "Total trade spend per retailer (share of gross revenue consumed by structural "
+        "rate-card discounts plus operational deductions) and revenue generated per "
+        "promotional dollar."
     )
     ws["B2"].font = FONT_SMALL
 
@@ -81,7 +78,7 @@ def build_efficiency(ws: Worksheet, db_path: Path) -> None:
     row += 1
 
     headers = [
-        "Retailer", "Trade Spend %", "Trade Spend $", "Gross Revenue",
+        "Retailer", "Total Trade Spend %", "Trade Spend $", "Gross Revenue",
         "Total Promo Cost", "Promo Period Revenue", "Revenue / Promo $", "Lift Measurable",
     ]
     header_row = row
@@ -127,25 +124,14 @@ def build_efficiency(ws: Worksheet, db_path: Path) -> None:
     tbl.tableStyleInfo = TABLE_STYLE
     ws.add_table(tbl)
 
-    # Flag retailers above the specialty avg as bad (red), at or below as good
-    pct_range = f"C{header_row + 1}:C{table_end}"
-    ws.conditional_formatting.add(
-        pct_range,
-        CellIsRule(operator="greaterThan", formula=[str(_SPECIALTY_AVG)], fill=FILL_BAD),
-    )
-    ws.conditional_formatting.add(
-        pct_range,
-        CellIsRule(operator="lessThanOrEqual", formula=[str(_SPECIALTY_AVG)], fill=FILL_GOOD),
-    )
-
     note_row = table_end + 2
     ws.merge_cells(f"B{note_row}:I{note_row}")
     note = ws.cell(
         row=note_row, column=2,
         value=(
-            "Trade spend % from rate card in sku_costs, trailing 52 weeks. "
-            "Revenue per promo dollar: total scan revenue during promotional periods ÷ total promo cost. "
-            "Reference line at 17% (specialty food structural average)."
+            "Total trade spend % = structural rate-card spend plus operational deductions "
+            "(damaged, spoilage, late delivery, fines), trailing 52 weeks, from Move 1. "
+            "Revenue per promo dollar: total scan revenue during promotional periods ÷ total promo cost."
         ),
     )
     note.font = FONT_SMALL
