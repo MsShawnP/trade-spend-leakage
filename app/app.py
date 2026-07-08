@@ -15,6 +15,7 @@ from dash import Dash
 app = Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
+    assets_folder=str(_ROOT / "assets"),
     suppress_callback_exceptions=True,
     title="Trade Spend Leakage",
 )
