@@ -26,7 +26,11 @@ from pipeline.db import source_conn, results_conn
 
 # ---------------------------------------------------------------------------
 # SQL — monthly accrued trade spend
-# Follows the same channel-rate CASE as move1_net_revenue.py.
+# The channel-rate CASE below MUST stay identical to move1_net_revenue.py:
+# every retailer (Walmart, Costco, Kroger, Whole Foods, Sprouts) maps to its
+# own rate, and only the Regional Group falls through to rate_regional. If a
+# named retailer is missing here it is silently under/over-accrued at the
+# regional rate and Move 1 and Move 5 stop reconciling.
 # ---------------------------------------------------------------------------
 
 _SQL_ACCRUED = """
@@ -40,6 +44,7 @@ channel_rates AS (
     SELECT
         AVG(trade_spend_pct_walmart)     AS rate_walmart,
         AVG(trade_spend_pct_costco)      AS rate_costco,
+        AVG(trade_spend_pct_kroger)      AS rate_kroger,
         AVG(trade_spend_pct_whole_foods) AS rate_whole_foods,
         AVG(trade_spend_pct_sprouts)     AS rate_sprouts,
         AVG(trade_spend_pct_regional)    AS rate_regional
@@ -60,6 +65,7 @@ SELECT
     SUM(mr.gross_revenue * CASE mr.retailer
         WHEN 'Walmart'     THEN cr.rate_walmart
         WHEN 'Costco'      THEN cr.rate_costco
+        WHEN 'Kroger'      THEN cr.rate_kroger
         WHEN 'Whole Foods' THEN cr.rate_whole_foods
         WHEN 'Sprouts'     THEN cr.rate_sprouts
         ELSE cr.rate_regional
