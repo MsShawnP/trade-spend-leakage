@@ -109,7 +109,7 @@ def build_net_revenue(ws: Worksheet, db_path: Path) -> None:
     tbl.tableStyleInfo = TABLE_STYLE
     ws.add_table(tbl)
 
-    # Conditional formatting on net-to-gross ratio: >= 0.83 is good (trade rate <= 17%)
+    # Conditional formatting on net-to-gross ratio: >= 0.83 is good, below is flagged
     ratio_range = f"F{header_row + 1}:F{table_end}"
     ws.conditional_formatting.add(
         ratio_range,
