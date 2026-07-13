@@ -96,6 +96,11 @@ class TestResultsDB:
 # 2-4. Upstream cinderhaven_product_master.db
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skipif(
+    not UPSTREAM_DB.is_file(),
+    reason=f"Upstream DB not present at {UPSTREAM_DB} "
+    "(cinderhaven-data submodule not checked out)",
+)
 class TestUpstreamDB:
 
     def test_upstream_db_exists(self):
@@ -114,20 +119,12 @@ class TestUpstreamDB:
 
     # 3. Product line count
     def test_product_line_count(self):
-        """
-        Currently 3 product lines in the upstream DB.
-        TODO: After re-export this should become 5
-              (adding Dried Goods and Snack Bites).
-              When the re-export lands, change the assertion to == 5.
-        """
+        """Five product lines post re-export (Dried Goods and Snack Bites added)."""
         count = _query_one(
             UPSTREAM_DB,
             "SELECT COUNT(DISTINCT product_line) FROM product_master",
         )
-        assert count == 3, (
-            f"Expected 3 product lines (pre-re-export), got {count}. "
-            "If re-export has landed, update this assertion to 5."
-        )
+        assert count == 5, f"Expected 5 product lines, got {count}"
 
     def test_known_product_lines_present(self):
         rows = _query_all(
@@ -135,7 +132,13 @@ class TestUpstreamDB:
             "SELECT DISTINCT product_line FROM product_master ORDER BY product_line",
         )
         lines = {r[0] for r in rows}
-        expected = {"Artisan Sauces", "Specialty Condiments", "Pantry Staples"}
+        expected = {
+            "Artisan Sauces",
+            "Specialty Condiments",
+            "Pantry Staples",
+            "Dried Goods",
+            "Snack Bites",
+        }
         assert expected <= lines, f"Missing product lines: {expected - lines}"
 
     # 4. Distinct retailers -- Kroger and Sprouts separate, not collapsed
