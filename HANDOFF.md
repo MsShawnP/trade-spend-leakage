@@ -5,21 +5,18 @@ session end.
 
 ---
 
-## 2026-06-30
+## 2026-07-24
 
-**Started from:** Prior session fixed chart colors (lailara_palette migration, paired categorical palette, HK gradient, Tokyo/HK divergent scatter, ad-hoc hex sweep) and added slopegraph label deconfliction + bracket annotations. Brackets still collided with y-axis ticks and end labels.
+**Started from:** Prior session (2026-06-30) removed bracket annotations from slopegraph and deployed. `/improve` overdue since 2026-07-01.
 
 **Did:**
 
-1. **Removed bracket annotations from Section 01 slopegraph:** Deleted the entire bracket block from `bump_chart()` — vertical bracket shapes, tick marks, "$820K"/"$586K" dollar labels, and "Top-3 gap..." caption (49 lines removed). Compression story is already in the Section 01 body copy and visible in the converging lines.
+1. Removed bracket annotations from Section 01 slopegraph (49 lines). Tightened margins (r: 220→180, l: 80→60, x-range [-0.12, 1.22] → [-0.05, 1.08]). Deployed to Fly.io.
+2. Added `tests/test_palette_adherence.py` — regression guard scanning chart/layout/constants modules for hex literals not in `lailara_palette`. Fixed 4 existing violations: 3 status-text hexes in `constants.py` now from `LL_STATUS`, button `#ffffff` in `layout.py` now `CARD_TEXT`.
 
-2. **Tightened chart margins:** Right margin 220→180, x-range [-0.12, 1.22] → [-0.05, 1.08], left margin 80→60 — brackets no longer need the extra room.
+**State:** Dashboard live at https://trade-spend.lailarallc.com/. 18/18 offline tests pass. All committed, pushed, deployed. No open tasks.
 
-3. **Verified clean:** Screenshot confirms no brackets, no gap caption, no label collisions. 17/17 offline tests pass. Deployed to Fly.io.
-
-**State:** Dashboard live at https://trade-spend.lailarallc.com/. All committed and pushed. Section 01 is clean: six paired-palette lines, per-retailer end labels, dollar y-axis, footnote. No open tasks.
-
-**Next:** No active tasks. Next `/improve` due 2026-07-01.
+**Next:** `/improve` overdue by 23 days — run it next session.
 
 ---
 
