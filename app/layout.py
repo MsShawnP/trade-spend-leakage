@@ -31,6 +31,26 @@ from app.db import get_accrual, get_net_revenue, get_leakage_summary, get_trade_
 # Brand header
 # ---------------------------------------------------------------------------
 
+
+def _leakage_headline() -> str:
+    """Finding-first header line, derived from results.db at startup."""
+    try:
+        df = get_leakage_summary()
+        total = float(df["dollar_total"].sum())
+        n = int(df["instance_count"].sum())
+        return (
+            f"${total:,.0f} of trade-spend leakage found across {n:,} instances "
+            f"(2023–2025) — double-funded promos, ghost promos, rate errors, and "
+            f"unauthorized deductions. Below: what it costs, and which retailers "
+            f"actually pay after it."
+        )
+    except Exception:
+        return (
+            "Find the money leaking out of promotions, then rerank retailers "
+            "by what they actually pay."
+        )
+
+
 def _brand_header() -> html.Div:
     return html.Div([
         html.Div([
@@ -65,8 +85,7 @@ def _brand_header() -> html.Div:
             "marginTop": "2px",
         }),
         html.P(
-            "Find the money leaking out of promotions, then rerank retailers "
-            "by what they actually pay.",
+            _leakage_headline(),
             style={
                 "fontFamily": FONT_SANS,
                 "fontSize": "16px",
