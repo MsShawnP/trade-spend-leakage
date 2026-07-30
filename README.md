@@ -94,8 +94,10 @@ contracted retailers (Walmart, Costco, Whole Foods, Sprouts, Kroger, Regional
 Group), 3 distributors (UNFI, KeHE, DPI Northwest) + 1 DTC channel (Shopify).
 Source: `CINDERHAVEN_CANONICAL.md` in `cinderhaven-data-platform`.
 
-> **Note:** Current baked data contains 3 product lines from an earlier
-> platform export. A re-export with all 5 lines is pending.
+> **Note:** Baked data re-exported 2026-07-30 from the current production
+> extract — all 5 product lines, all 50 SKUs. Pipeline run against the
+> verified canonical dataset (scan rows 1,323,569; deductions 14,947;
+> promotions 123 — exact canonical counts).
 
 ## Project structure
 

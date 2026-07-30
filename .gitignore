@@ -54,3 +54,4 @@ credentials.*
 secrets.*
 *.sql
 *.conf
+data/cinderhaven-data/
