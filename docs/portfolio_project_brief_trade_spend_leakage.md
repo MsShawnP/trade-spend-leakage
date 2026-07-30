@@ -36,7 +36,7 @@ The deepest problem is conceptual: **the brand ranks its retailers by gross reve
 
 #### The Status Quo
 
-Trade spend lives in three disconnected places: the promotional agreements (in sales' emails and a spreadsheet), the deductions (in the remittance data, coded cryptically), and the accruals (in the accounting system, as estimates). Nobody has joined them. The CEO sees one number — "trade spend: $3.8M" — and has no way to ask which retailers, which promotions, or which dollars worked. So the question never gets asked, and the leakage never gets found.
+Trade spend lives in three disconnected places: the promotional agreements (in sales' emails and a spreadsheet), the deductions (in the remittance data, coded cryptically), and the accruals (in the accounting system, as estimates). Nobody has joined them. The CEO sees one number — "trade spend: ~$3.6M/yr" (11.0% of scan revenue, trailing 52 weeks) — and has no way to ask which retailers, which promotions, or which dollars worked. So the question never gets asked, and the leakage never gets found.
 
 ---
 
@@ -96,7 +96,7 @@ The Excel model gives the CFO credibility and auditability; the dashboard gives 
 
 #### The Margin Math
 
-For a $25M brand spending $3.8M on trade (15% of gross):
+For a $25M brand spending ~$3.6M/yr on trade (11.0% of scan revenue, trailing 52 weeks):
 
 | Leakage Category | Typical % of Trade | Financial Impact | Strategic Action |
 |------------------|:------------------:|:----------------:|------------------|
@@ -109,9 +109,9 @@ The split matters: the double-funding, phantom, and rate-creep buckets are *reco
 
 #### Before / After
 
-- **Before:** CEO treats Walmart as the #1 account because it buys the most. Trade spend is "$3.8M" — one number, no breakdown. Promotional decisions are made on relationship and habit. Nobody reconciles agreements against deductions.
+- **Before:** CEO treats Walmart as the #1 account because it buys the most. Trade spend is "~$3.6M/yr" — one number, no breakdown. Promotional decisions are made on relationship and habit. Nobody reconciles agreements against deductions.
 
-- **After:** CEO sees Walmart ranks #4 by net revenue after $1.9M in trade spend. Sees $615K in identifiable leakage — $215K recoverable, $400K reallocatable. Reallocates trade spend from the sinkhole retailers to the efficient ones. Disputes the double-funded and phantom deductions with evidence. Next year's trade spend negotiation starts from a reconciled base, not an inflated one.
+- **After:** CEO sees Walmart ranks #4 by net revenue after its trade load. Sees ~$1.14M in identified leakage — $615K recoverable/preventable, $520K reallocatable. Reallocates trade spend from the sinkhole retailers to the efficient ones. Disputes the double-funded and phantom deductions with evidence. Next year's trade spend negotiation starts from a reconciled base, not an inflated one.
 
 #### Who Else Sees This?
 
@@ -177,7 +177,14 @@ The analysis joins three data sources the brand already has but has never connec
 
 ### 8. Cinderhaven Integration
 
-Cinderhaven spends $3.8M on trade across Walmart, Costco, UNFI/Whole Foods, KeHE, and DTC. The analysis finds:
+> **Scale note (2026-07-30).** The worked example below is an illustrative
+> composite sized for a promo-active trade book. Cinderhaven's own promotional
+> spend wound down in Nov 2024 (trailing-36m promo book: $328,891; cy2025: $0),
+> so the live dashboard reports current — and much smaller — promo-side figures
+> from Postgres. The leak taxonomy is what carries; the dollars below are not
+> current Cinderhaven figures.
+
+Cinderhaven runs ~$3.6M/yr in all-in trade (11.0% of scan revenue, trailing 52 weeks) across Walmart, Costco, UNFI/Whole Foods, KeHE, and DTC. On a promo-active book of that size, the analysis pattern finds:
 
 - **The ranking inverts:** Walmart is #1 by gross revenue ($8M) but #4 by net revenue after $1.9M in trade spend. Costco, which buys less gross, keeps far more net.
 - **$340K in double-funded promotions** — funded off-invoice and also deducted as bill-backs.
@@ -185,7 +192,7 @@ Cinderhaven spends $3.8M on trade across Walmart, Costco, UNFI/Whole Foods, KeHE
 - **$95K in rate discrepancies** — deductions exceeding agreed promotional rates.
 - **~$520K in ineffective promotions** — ran as agreed but generated no positive ROI (paid to discount baseline volume).
 
-Total identified: ~$615K recoverable/preventable + ~$520K reallocatable on $3.8M of trade spend. The headline: **16% of Cinderhaven's trade spend was leaking, and its "best" retailer was one of its worst.**
+Total identified: ~$615K recoverable/preventable + ~$520K reallocatable — roughly 30% of a promo-active trade book. The headline: **a material slice of trade spend leaks, and the "best" retailer can be one of the worst.**
 
 Runs on the existing Cinderhaven Data Platform — joins the `fct_deductions`, promotional, and POS marts. Consistent with the deduction figures in Retailer Deduction Recovery and the channel figures in Where the Money.
 
