@@ -7,6 +7,7 @@ cinderhaven_product_master.db contain expected baseline counts and structure.
 Run:  pytest tests/test_canonical_regression.py -v
 """
 
+import json
 import os
 import sqlite3
 from pathlib import Path
@@ -18,6 +19,11 @@ RESULTS_DB = ROOT / "data" / "results.db"
 UPSTREAM_DB = (
     ROOT / "data" / "cinderhaven-data" / "data" / "cinderhaven_product_master.db"
 )
+
+# Canonical counts from the vendored canon, not hardcoded.
+CANON = json.loads((ROOT / "reference" / "canonical_values.json").read_text(encoding="utf-8"))
+CANON_SKUS = CANON["universe"]["skus_total"]["all_time"]
+CANON_LINES = CANON["universe"]["product_lines"]["all_time"]
 
 
 # ---------------------------------------------------------------------------
@@ -109,13 +115,13 @@ class TestUpstreamDB:
     # 2. SKU count
     def test_sku_count_is_50(self):
         count = _query_one(UPSTREAM_DB, "SELECT COUNT(*) FROM product_master")
-        assert count == 50, f"Expected 50 SKUs, got {count}"
+        assert count == CANON_SKUS, f"Expected {CANON_SKUS} SKUs (canon), got {count}"
 
     def test_distinct_sku_count_is_50(self):
         count = _query_one(
             UPSTREAM_DB, "SELECT COUNT(DISTINCT sku) FROM product_master"
         )
-        assert count == 50, f"Expected 50 distinct SKUs, got {count}"
+        assert count == CANON_SKUS, f"Expected {CANON_SKUS} distinct SKUs (canon), got {count}"
 
     # 3. Product line count
     def test_product_line_count(self):
@@ -124,7 +130,7 @@ class TestUpstreamDB:
             UPSTREAM_DB,
             "SELECT COUNT(DISTINCT product_line) FROM product_master",
         )
-        assert count == 5, f"Expected 5 product lines, got {count}"
+        assert count == CANON_LINES, f"Expected {CANON_LINES} product lines (canon), got {count}"
 
     def test_known_product_lines_present(self):
         rows = _query_all(
