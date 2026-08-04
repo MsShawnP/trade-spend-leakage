@@ -1,7 +1,14 @@
 """Shared workbook styles — Lailara Design System v2."""
 
+from datetime import date
+
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.worksheet.table import TableStyleInfo
+
+# Default "Built <date>" stamp for the demo workbook — the data as-of, NOT the
+# wall clock. Using date.today() made the workbook non-reproducible; client mode
+# passes the engagement as_of_date instead.
+DEFAULT_BUILT_DATE = date(2026, 1, 31)
 
 SERIF = "Playfair Display"
 SANS = "Source Sans 3"
