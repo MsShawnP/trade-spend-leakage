@@ -114,6 +114,27 @@ Project state files: `PLAN.md` (current work arc), `HANDOFF.md`
 (session-by-session state), `DECISIONS.md` (durable choices), `FAILURES.md`
 (dead ends).
 
+## Client engagement use
+
+The demo renders the committed Cinderhaven results. To analyze a **client's own
+trade spend** in place — validated, never committed, never deployed — use client
+mode (see [INPUT-SPEC.md](INPUT-SPEC.md)):
+
+```bash
+pip install -e ../engagement-template/lib      # the shared lailara_engagement scaffold
+python client_mode.py --config engagement.yml --input client-data/trade_spend.csv \
+    [--rate-card client-data/rate_card.csv] --out client-output [--final]
+```
+
+It computes net revenue and the effective trade-spend rate by retailer, and — if a
+**long** rate card (retailer, rate, effective_date) is supplied — flags rate
+discrepancies against each retailer's latest rate effective on/before `as_of_date`.
+Ghost/double-funded/unauthorized detection needs promo-level authorization data and
+is disclosed as out of scope for a retailer-level ledger. Output to `client-output/`
+(gitignored): a branded, provenance-footed, DRAFT-watermarked
+`trade-spend-summary.html` + `summary.json`, or a Data Readiness Report if a required
+column is missing. The demo app + pipeline are never edited (golden-locked).
+
 ## License
 
 MIT
