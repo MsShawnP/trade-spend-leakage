@@ -41,6 +41,25 @@ def get_net_revenue() -> pd.DataFrame:
         conn.close()
 
 
+def get_net_revenue_window_weeks() -> int | None:
+    """Return the distinct-week count Move 1's trailing window actually spans.
+
+    Read from results_net_revenue_window (written by the pipeline). Returns None
+    if the table is absent (older results.db or a partial pipeline run) so the
+    caller can omit the span rather than assert a wrong one.
+    """
+    conn = _connect()
+    try:
+        row = conn.execute(
+            "SELECT week_count FROM results_net_revenue_window LIMIT 1"
+        ).fetchone()
+        return int(row["week_count"]) if row is not None else None
+    except sqlite3.OperationalError:
+        return None
+    finally:
+        conn.close()
+
+
 def get_leakage_summary() -> pd.DataFrame:
     """Return results_leakage_summary (4 rows, one per sub-type)."""
     conn = _connect()
