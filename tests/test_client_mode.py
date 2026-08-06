@@ -84,6 +84,28 @@ def test_long_rate_card_flags_discrepancy(tmp_path):
     assert result["discrepancies"] == 1
 
 
+def test_window_label_and_as_of_track_config_not_hardcoded(tmp_path):
+    """The rendered window label and as-of date must come from config
+    (basis.window_label / as_of_date), not a hardcoded default. The suite
+    asserted net revenue and rate-gap flags but never the window/as-of text — a
+    hardcoded window matching the demo would pass, the gap that let trade-spend's
+    own Dash dashboard hardcode 'Trailing 52 weeks' (recorded as a dormant defect
+    in DECISIONS.md).
+
+    Both halves: feed a distinctive window_label + as_of and assert they render,
+    AND assert the demo defaults are absent."""
+    cfg = tmp_path / "engagement.yml"
+    cfg.write_text(_CONFIG.replace("window_label: CY2025", "window_label: FY2099-pilot")
+                          .replace('as_of_date: "2026-01-31"', 'as_of_date: "2099-09-09"'),
+                   encoding="utf-8")
+    src = _write(tmp_path, "l.csv", _LEDGER)
+    result = client_mode.run(str(cfg), src, str(tmp_path / "out"))
+    assert result["status"] == "ok"
+    html = open(result["report"], encoding="utf-8").read()
+    assert "FY2099-pilot" in html and "2099-09-09" in html
+    assert "CY2025" not in html and "2026-01-31" not in html   # demo defaults must not survive
+
+
 def test_missing_required_column_blocks(tmp_path):
     src = _write(tmp_path, "bad.csv", "retailer,gross_revenue\nA,100\n")
     result = client_mode.run(_cfg(tmp_path), src, str(tmp_path / "out"))
