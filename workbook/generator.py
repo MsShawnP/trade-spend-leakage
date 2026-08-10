@@ -35,7 +35,7 @@ _TAB_BUILDERS = {
 }
 
 
-def generate_workbook(results_db_path: Path) -> bytes:
+def generate_workbook(results_db_path: Path, built_date=None) -> bytes:
     """Build the six-sheet workbook and return its contents as bytes.
 
     If results.db is missing or a table hasn't been computed yet, affected
@@ -48,7 +48,7 @@ def generate_workbook(results_db_path: Path) -> bytes:
     for name in TAB_NAMES:
         ws = wb.create_sheet(title=name)
         ws.sheet_properties.tabColor = _TAB_COLORS[name]
-        _TAB_BUILDERS[name](ws, results_db_path)
+        _TAB_BUILDERS[name](ws, results_db_path, built_date)
 
     wb.active = 0
 

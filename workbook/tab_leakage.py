@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
-from datetime import date
+from workbook.styles import DEFAULT_BUILT_DATE
 from pathlib import Path
 
 from openpyxl.formatting.rule import CellIsRule
@@ -55,7 +55,7 @@ def _read(db_path: Path) -> dict | None:
         conn.close()
 
 
-def build_leakage(ws: Worksheet, db_path: Path) -> None:
+def build_leakage(ws: Worksheet, db_path: Path, built_date=None) -> None:
     data = _read(db_path)
 
     ws.sheet_view.showGridLines = False
@@ -77,7 +77,7 @@ def build_leakage(ws: Worksheet, db_path: Path) -> None:
     ws["B2"].font = FONT_SMALL
 
     ws.merge_cells("B3:I3")
-    ws["B3"] = f"Built {date.today().isoformat()}"
+    ws["B3"] = f"Built {(built_date or DEFAULT_BUILT_DATE).isoformat()}"
     ws["B3"].font = FONT_SMALL
 
     if data is None:

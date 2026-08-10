@@ -18,3 +18,9 @@ DECISIONS.md
 FAILURES.md
 HANDOFF.md
 PLAN.md
+
+# --- lailara engagement scaffold ---
+client-data/
+client-output/
+engagement.yml
+engagement.yaml

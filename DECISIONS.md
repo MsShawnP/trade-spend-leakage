@@ -172,3 +172,16 @@ When a decision is overturned:
 1. Strike through the original entry above (don't delete)
 2. Add a new entry below with the replacement decision
 3. Note the link in both directions
+
+---
+
+## Known Defects (dormant)
+
+### 2026-08-06 — Dormant defect: Dash "Trailing 52 weeks" / "trailing-12-month" window footnotes (DO NOT fix now)
+- **Decision:** Leave the hardcoded trailing-window labels in the Dash dashboard as-is for now; fix them in a dedicated pass, not as a drive-by.
+- **Why:** `app/layout.py:208` renders the Move 1 footnote "Trailing 52 weeks." and `app/layout.py:470` renders "Accrued trade spend: trailing-12-month scan revenue × structural...". Both are **hardcoded strings that assert a data-dependent span independent of the data** — the exact defect class the Meridian dry run caught in `trade-spend-data-diagnostic/warehouse_adapter.py` (fixed in that repo's commit 4e2a6d9: labels clamp to actual coverage + honor config). Today these footnotes are **correct** because the Dash app runs on the fixed canonical Cinderhaven dataset, which genuinely spans 52 weeks / 12 months; the correctness is an accident of the current data, not a computed fact.
+  - The **client-mode adapter is unaffected**: `client_mode.py` derives its window label from `basis.window_label` + `as_of_date` (config), and this is now pinned by `tests/test_client_mode.py::test_window_label_and_as_of_track_config_not_hardcoded`. This entry concerns **only** the demo/live Dash surface.
+  - Fixing it means deriving "52 weeks" / "12 months" from the actual pipeline window (the real week/month count in `pipeline/move1_net_revenue.py` / `move5_accrual.py` output in `results.db`) and will almost certainly **move the deployed demo's golden/screenshots** — a distinct, higher-risk concern that must not ride along with a test-only change.
+- **Trigger that unmasks it (check when this happens):** any **data reseed** of the Cinderhaven platform, or any **window/config change** that makes the actual trailing coverage ≠ 52 weeks / 12 months. When either occurs, re-verify the footnote against the real pipeline window; if they diverge, derive the label from the data (clamp to actual coverage) — the same fix pattern as `warehouse_adapter.py` commit 4e2a6d9.
+- **Scope:** `app/layout.py` (Dash dashboard footnotes) only — NOT `client_mode.py`.
+- **Do not:** Edit these footnotes as part of a test or unrelated change; it moves the deployed demo's golden. Do it as its own pass with the golden update verified against the canonical dataset. Deploys are `main`-gated; this work stays on `client-mode-2026-08` until deliberately promoted.

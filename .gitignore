@@ -55,3 +55,15 @@ secrets.*
 *.sql
 *.conf
 data/cinderhaven-data/
+
+# --- lailara engagement scaffold ---
+# Client engagement data is runtime-only: never commit it, never deploy it.
+client-data/
+client-output/
+/engagement.yml
+/engagement.yaml
+# (engagement.demo.yml and engagement.example.yml stay committable)
+
+# Transient SQLite WAL / shared-memory files
+data/results.db-shm
+data/results.db-wal

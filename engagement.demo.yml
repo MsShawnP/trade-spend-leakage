@@ -1,0 +1,16 @@
+# Lailara LLC — Engagement config (DEMO). Canonical demo identity; demo: true so
+# the deploy guard ignores it. A real client run uses engagement.yml with the
+# client's own trade-spend ledger and (long) rate card.
+client:
+  name: "Cinderhaven Provisions (demo)"
+engagement:
+  id: "CINDERHAVEN-DEMO"
+as_of_date: "2026-01-31"
+prepared_by: "Lailara LLC"
+demo: true
+basis:
+  window_label: "CY2025"
+columns:
+  retailer: "retailer"
+  gross_revenue: "gross_revenue"
+  trade_spend: "trade_spend"
