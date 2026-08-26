@@ -5,6 +5,20 @@ session end.
 
 ---
 
+## 2026-08-26
+
+**Started from:** Continuation of the trailing-window-label work. Dash fix + first wrap already committed (`5582bae`, `908a0f7`); the workbook sibling was flagged but not done, and nothing was on `main` yet.
+
+**Did:** (1) Fixed the workbook sibling defect (`2d1ead7`) — added `workbook/windows.py` (`read_trailing_weeks`/`read_trailing_months`) and derived all six window labels across `tab_net_revenue`, `tab_efficiency`, `tab_accrual`, `tab_summary`; +6 workbook tests (suite → 60 pass). (2) Pushed to `client-mode-2026-08`, rebasing cleanly over two concurrent `ci:` commits. (3) Promoted to `main`: PR #2, CI green (drift/golden/client-mode), merged (`a75ad2e`). (4) Deploy: merge triggered `fly-deploy.yml` — success; live site HTTP 200. (5) Synced the primary worktree's `client-mode-2026-08` and local `main` ref.
+
+**Sibling surfaces:** Trailing-window label — 2 surfaces, both now covered. Dash (`app/layout.py`, 3 footnotes) fixed earlier; Excel workbook (`workbook/windows.py` + 6 labels across 4 tabs) fixed this session. Zero live instances remain in either deliverable.
+
+**State:** Fix live on `main` (`a75ad2e`), deployed, HTTP 200. `main` = `client-mode-2026-08` content (`2d1ead7`). 60 pass / 34 skip, drift clean, working tree clean. No open defects.
+
+**Next:** Nothing outstanding on this arc. Optional: `/improve` overdue since 2026-07-01 (a `main`-branch health pass). Gotcha for future sessions: the base branch moved under me twice (concurrent `ci:` commits + a prior PR #1 to main) — `git fetch` remote state before committing/pushing.
+
+---
+
 ## 2026-08-12
 
 **Started from:** Delegated task on `client-mode-2026-08`: resolve the dormant defect from `5a96fd6` — `app/layout.py` hardcoded trailing-window footnote labels ("Trailing 52 weeks.", "trailing-12-month") that assert a span independent of the data. Worktree started on a stale ancestor; fast-forwarded to the branch tip first.
