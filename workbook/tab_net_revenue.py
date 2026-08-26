@@ -27,6 +27,7 @@ from workbook.styles import (
     SANS,
     TABLE_STYLE,
 )
+from workbook.windows import read_trailing_weeks
 
 _PLACEHOLDER = "Not yet computed — run the pipeline first."
 
@@ -74,7 +75,12 @@ def build_net_revenue(ws: Worksheet, db_path: Path, built_date=None) -> None:
         ws.cell(row=5, column=2, value=_PLACEHOLDER).font = FONT_SMALL
         return
 
-    ws.cell(row=5, column=2, value="Trailing 52 Weeks").font = FONT_SECTION
+    # Window span derived from the pipeline output, never hardcoded.
+    weeks = read_trailing_weeks(db_path)
+    ws.cell(
+        row=5, column=2,
+        value=f"Trailing {weeks} Weeks" if weeks else "Trailing Window",
+    ).font = FONT_SECTION
 
     headers = ["Retailer", "Gross Revenue", "Trade Spend", "Net Revenue", "Net-to-Gross %"]
     header_row = 6
@@ -142,7 +148,8 @@ def build_net_revenue(ws: Worksheet, db_path: Path, built_date=None) -> None:
         row=note_row, column=2,
         value=(
             "Structural trade spend rate from sku_costs rate card per channel. "
-            "Regional chains use the blended regional rate. Trailing 52 weeks of scan data."
+            "Regional chains use the blended regional rate."
+            + (f" Trailing {weeks} weeks of scan data." if weeks else "")
         ),
     )
     note.font = FONT_SMALL
