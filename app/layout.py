@@ -24,7 +24,14 @@ from app.constants import (
     TEXT_PRIMARY,
     TEXT_SECONDARY,
 )
-from app.db import get_accrual, get_net_revenue, get_leakage_summary, get_trade_efficiency, get_promo_roi
+from app.db import (
+    get_accrual,
+    get_net_revenue,
+    get_net_revenue_window_weeks,
+    get_leakage_summary,
+    get_trade_efficiency,
+    get_promo_roi,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -157,8 +164,12 @@ def _compression_lead(df: pd.DataFrame) -> str:
     )
 
 
-def _section_net_revenue(df: pd.DataFrame) -> html.Div:
+def _section_net_revenue(df: pd.DataFrame, weeks: int | None = None) -> html.Div:
     initial_fig = bump_chart(df)
+
+    # Window span is derived from the pipeline output (results_net_revenue_window),
+    # never hardcoded — a reseed to a different span updates this automatically.
+    span = f" Trailing {weeks} weeks." if weeks else ""
 
     return html.Div([
         html.Div([
@@ -205,7 +216,7 @@ def _section_net_revenue(df: pd.DataFrame) -> html.Div:
             "Structural rates from negotiated rate card in sku_costs. Operational deductions "
             "(damaged, spoilage, late delivery, short ship, label/pallet fines, pricing errors) "
             "from retailer_deductions; promo billbacks and slotting excluded to avoid "
-            "double-counting with the structural rate. Trailing 52 weeks."
+            "double-counting with the structural rate." + span
         ),
     ], id="section-net-revenue", style={"marginBottom": SECTION_GAP})
 
@@ -214,8 +225,12 @@ def _section_net_revenue(df: pd.DataFrame) -> html.Div:
 # Move 2 — Trade Spend Efficiency
 # ---------------------------------------------------------------------------
 
-def _section_efficiency(df: pd.DataFrame) -> html.Div:
+def _section_efficiency(df: pd.DataFrame, weeks: int | None = None) -> html.Div:
     fig = efficiency_chart(df) if not df.empty else None
+
+    # Same trailing window as Move 1 ("as computed in Move 1"), derived from the
+    # same pipeline output so both footnotes always agree with the data.
+    span = f"trailing {weeks} weeks, " if weeks else ""
 
     chart_content: list = []
     if fig is not None:
@@ -269,7 +284,7 @@ def _section_efficiency(df: pd.DataFrame) -> html.Div:
 
         footnote(
             "Total trade spend % = structural rate-card spend plus operational "
-            "deductions (damaged, spoilage, late delivery, fines), trailing 52 weeks, "
+            "deductions (damaged, spoilage, late delivery, fines), " + span +
             "as computed in Move 1. Revenue per promo dollar: total scan revenue "
             "across all stores during promotional periods ÷ total promo cost. "
             "Overlapping promo weeks are counted once. Does not adjust for baseline — "
@@ -418,6 +433,11 @@ def _section_promo_roi(df: pd.DataFrame) -> html.Div:
 def _section_accrual(df: pd.DataFrame) -> html.Div:
     fig = accrual_chart(df) if not df.empty else None
 
+    # Month span is the number of monthly rows the pipeline actually produced
+    # (results_accrual), not a hardcoded "12" — a shorter reseed shows fewer.
+    months = len(df) if not df.empty else None
+    accrued_window = f"trailing-{months}-month " if months else "trailing "
+
     chart_content: list = []
     if fig is not None:
         chart_content.append(dcc.Graph(
@@ -467,7 +487,7 @@ def _section_accrual(df: pd.DataFrame) -> html.Div:
         *chart_content,
 
         footnote(
-            "Accrued trade spend: trailing-12-month scan revenue × structural "
+            "Accrued trade spend: " + accrued_window + "scan revenue × structural "
             "rate card per channel (sku_costs). Actual: all deductions recorded in "
             "retailer_deductions, grouped by month — includes operational charges "
             "(label fines, spoilage, damaged goods, delivery penalties) in addition "
@@ -507,8 +527,10 @@ def create_layout() -> html.Div:
 
     try:
         df_net = get_net_revenue()
+        window_weeks = get_net_revenue_window_weeks()
     except FileNotFoundError:
         df_net = _EMPTY_NET
+        window_weeks = None
 
     df_efficiency = get_trade_efficiency()
     if df_efficiency.empty:
@@ -532,8 +554,8 @@ def create_layout() -> html.Div:
         dcc.Store(id="promo-roi-pin-store", data=None),
         html.Div([
             _brand_header(),
-            _section_net_revenue(df_net),
-            _section_efficiency(df_efficiency),
+            _section_net_revenue(df_net, window_weeks),
+            _section_efficiency(df_efficiency, window_weeks),
             _section_leakage(df_leakage),
             _section_promo_roi(df_promo_roi),
             _section_accrual(df_accrual),

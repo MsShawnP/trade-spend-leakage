@@ -95,6 +95,20 @@ WHERE d.deduction_date >= tb.oldest_week
 GROUP BY d.retailer_id
 """
 
+# Counts the distinct weeks the trailing window actually spans (<= 52 if the
+# source carries fewer). Persisted so the dashboard footnote can state the real
+# span instead of a hardcoded "52 weeks" that a reseed could silently falsify.
+# Must use the SAME `LIMIT 52` window as the revenue/deductions queries above.
+_WEEK_COUNT_SQL = """
+SELECT COUNT(*) AS week_count
+FROM (
+    SELECT DISTINCT week_ending
+    FROM raw.scan_data
+    ORDER BY week_ending DESC
+    LIMIT 52
+) t
+"""
+
 
 def compute_net_revenue(conn) -> pd.DataFrame:
     """Return per-retailer net revenue after all trade costs.
@@ -129,14 +143,30 @@ def compute_net_revenue(conn) -> pd.DataFrame:
     return df.sort_values("net_revenue", ascending=False).reset_index(drop=True)
 
 
+def compute_week_count(conn) -> int:
+    """Return the number of distinct weeks the trailing window actually spans.
+
+    This is MIN(52, distinct weeks available in scan_data). The dashboard reads
+    it to state the true window in its footnote rather than asserting "52 weeks"
+    regardless of what the data holds.
+    """
+    with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(_WEEK_COUNT_SQL)
+        row = cur.fetchone()
+    return int(row["week_count"]) if row else 0
+
+
 def run() -> None:
     """Execute Move 1 and write results_net_revenue to results.db."""
     with source_conn() as conn:
         df = compute_net_revenue(conn)
+        week_count = compute_week_count(conn)
 
     numeric_cols = ["gross_revenue", "trade_spend", "net_revenue", "net_to_gross_ratio"]
     for col in numeric_cols:
         df[col] = df[col].astype(float)
+
+    window = pd.DataFrame([{"week_count": int(week_count)}])
 
     with results_conn() as conn:
         df.to_sql("results_net_revenue", conn, if_exists="replace", index=False)
@@ -144,5 +174,9 @@ def run() -> None:
             "CREATE INDEX IF NOT EXISTS idx_net_revenue_retailer "
             "ON results_net_revenue(retailer)"
         )
+        window.to_sql("results_net_revenue_window", conn, if_exists="replace", index=False)
 
-    print(f"  Move 1 complete — {len(df)} retailers written to results_net_revenue")
+    print(
+        f"  Move 1 complete — {len(df)} retailers written to results_net_revenue "
+        f"(trailing window: {week_count} weeks)"
+    )

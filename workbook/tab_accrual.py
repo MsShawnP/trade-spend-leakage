@@ -75,6 +75,10 @@ def build_accrual(ws: Worksheet, db_path: Path, built_date=None) -> None:
         ws.cell(row=5, column=2, value=_PLACEHOLDER).font = FONT_SMALL
         return
 
+    # Month span is the number of monthly rows the pipeline produced, not a
+    # hardcoded "12" — matches len(results_accrual) used by the Dash footnote.
+    months = len(rows) or None
+
     # --- KPI summary ---
     row = 5
     total_accrued = sum(r[1] for r in rows)
@@ -98,7 +102,10 @@ def build_accrual(ws: Worksheet, db_path: Path, built_date=None) -> None:
     row += 3
 
     # --- Monthly table ---
-    ws.cell(row=row, column=2, value="Monthly Detail (Trailing 12 Months)").font = FONT_SECTION
+    ws.cell(
+        row=row, column=2,
+        value=f"Monthly Detail (Trailing {months} Months)" if months else "Monthly Detail",
+    ).font = FONT_SECTION
     row += 1
 
     headers = ["Month", "Accrued", "Actual Deducted", "Variance"]
@@ -162,7 +169,8 @@ def build_accrual(ws: Worksheet, db_path: Path, built_date=None) -> None:
     note = ws.cell(
         row=note_row, column=2,
         value=(
-            "Accrued: trailing-12-month scan revenue × structural rate card (sku_costs) per channel. "
+            "Accrued: " + (f"trailing-{months}-month " if months else "trailing ")
+            + "scan revenue × structural rate card (sku_costs) per channel. "
             "Actual: all deductions recorded in retailer_deductions, grouped by month."
         ),
     )

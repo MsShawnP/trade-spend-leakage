@@ -5,6 +5,18 @@ session end.
 
 ---
 
+## 2026-08-12
+
+**Started from:** Delegated task on `client-mode-2026-08`: resolve the dormant defect from `5a96fd6` — `app/layout.py` hardcoded trailing-window footnote labels ("Trailing 52 weeks.", "trailing-12-month") that assert a span independent of the data. Worktree started on a stale ancestor; fast-forwarded to the branch tip first.
+
+**Did:** Derived all three Dash-demo footnote spans from the pipeline output. Move 1 now persists the actual distinct-week count to a new `results_net_revenue_window` table (`pipeline/move1_net_revenue.py`); `app/db.py` `get_net_revenue_window_weeks()` reads it; `app/layout.py` renders the count for Move 1 (@208) and Move 2 (@272), and the accrual month count (`len(results_accrual)`) for Move 5 (@470), omitting the span when unavailable. Fixed line 272 too (identical defect not named in the task). Backfilled the committed `results.db` offline — `week_count=52` verified against `reference/canonical_values.json` + scan_data provenance. Added `tests/test_window_labels.py` (8 tests). Bumped the demo golden SHA deliberately (figures unchanged; rendered text byte-identical for canonical data, so no screenshot move). Base branch advanced mid-session → rebased and reconciled DECISIONS.md (struck through the resolved dormant entry, bidirectional links).
+
+**State:** 54 passed / 34 skipped, drift gate clean, layout builds. Commit `f68af56` on `claude/busy-liskov-0ae8c8`, a clean fast-forward descendant of `client-mode-2026-08`. `main` untouched. Not pushed. Working tree clean.
+
+**Next:** (1) Integrate `f68af56` onto `client-mode-2026-08` from the primary worktree: `git merge --ff-only claude/busy-liskov-0ae8c8`. (2) Tracked sibling — the identical hardcoded-window defect lives in the Excel workbook (`workbook/tab_net_revenue.py` ~77/~145, `tab_efficiency.py` ~133, `tab_accrual.py` ~101/~165, `tab_summary.py` ~293), checked but not fixed; flagged via spawn_task and DECISIONS "Still open". Derive those from data the same way (week count from `results_net_revenue_window`, month count from `len(results_accrual)`).
+
+---
+
 ## 2026-07-24
 
 **Started from:** Prior session (2026-06-30) removed bracket annotations from slopegraph and deployed. `/improve` overdue since 2026-07-01.

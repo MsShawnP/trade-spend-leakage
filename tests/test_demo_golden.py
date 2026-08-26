@@ -16,7 +16,10 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 DB = ROOT / "data" / "results.db"
 
-GOLDEN_DB_SHA256_PREFIX = "3631bbfe3bfba573"
+# Bumped 2026-08-06: added results_net_revenue_window table (week-span metadata
+# read by the dashboard footnote). Figures below are unchanged; only the file
+# bytes moved. See DECISIONS.md 2026-08-06 window-label entry.
+GOLDEN_DB_SHA256_PREFIX = "b72cd6ff98a4b966"
 
 
 @pytest.fixture(scope="module")

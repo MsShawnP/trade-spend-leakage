@@ -25,6 +25,7 @@ from workbook.styles import (
     TAB_NAMES,
     FONT_NAV,
 )
+from workbook.windows import read_trailing_months
 
 
 def _read(db_path: Path) -> dict:
@@ -89,6 +90,8 @@ def _placeholder(ws: Worksheet, row: int, col: int = 2) -> None:
 
 def build_summary(ws: Worksheet, db_path: Path, built_date=None) -> None:
     data = _read(db_path)
+    # Month span derived from the pipeline output, never hardcoded.
+    _months = read_trailing_months(db_path)
 
     ws.sheet_view.showGridLines = False
 
@@ -290,7 +293,9 @@ def build_summary(ws: Worksheet, db_path: Path, built_date=None) -> None:
     callout = ws.cell(
         row=row, column=2,
         value=(
-            "This workbook summarises trailing-12-month trade spend for Cinderhaven Provisions. "
+            "This workbook summarises "
+            + (f"trailing-{_months}-month " if _months else "trailing ")
+            + "trade spend for Cinderhaven Provisions. "
             "Numbers match the interactive dashboard. All data sourced from results.db — "
             "the pre-computed output of the trade spend pipeline."
         ),

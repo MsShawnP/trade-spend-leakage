@@ -24,6 +24,7 @@ from workbook.styles import (
     SANS,
     TABLE_STYLE,
 )
+from workbook.windows import read_trailing_weeks
 
 _PLACEHOLDER = "Not yet computed — run the pipeline first."
 
@@ -126,11 +127,15 @@ def build_efficiency(ws: Worksheet, db_path: Path, built_date=None) -> None:
 
     note_row = table_end + 2
     ws.merge_cells(f"B{note_row}:I{note_row}")
+    # Same trailing window as Move 1, derived from the pipeline output.
+    weeks = read_trailing_weeks(db_path)
     note = ws.cell(
         row=note_row, column=2,
         value=(
             "Total trade spend % = structural rate-card spend plus operational deductions "
-            "(damaged, spoilage, late delivery, fines), trailing 52 weeks, from Move 1. "
+            "(damaged, spoilage, late delivery, fines), "
+            + (f"trailing {weeks} weeks, " if weeks else "")
+            + "from Move 1. "
             "Revenue per promo dollar: total scan revenue during promotional periods ÷ total promo cost."
         ),
     )

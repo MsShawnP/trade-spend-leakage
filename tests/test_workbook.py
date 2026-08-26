@@ -13,6 +13,16 @@ from openpyxl import load_workbook
 
 from workbook.generator import generate_workbook
 from workbook.styles import TAB_NAMES
+from workbook.windows import read_trailing_months, read_trailing_weeks
+
+ROOT = Path(__file__).resolve().parent.parent
+CANON_DB = ROOT / "data" / "results.db"
+
+
+def _sheet_text(wb, sheet_name: str) -> str:
+    """All non-empty string cells of a sheet joined into one blob for substring checks."""
+    ws = wb[sheet_name]
+    return " || ".join(str(c.value) for row in ws.iter_rows() for c in row if c.value is not None)
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -223,3 +233,68 @@ def test_partial_build_state_produces_valid_workbook_with_placeholders(partial_r
         all_values = [str(c.value) for row in ws.iter_rows() for c in row if c.value]
         has_placeholder = any("Not yet computed" in v for v in all_values)
         assert has_placeholder, f"'{sheet_name}' missing placeholder text for partial build state"
+
+
+# ---------------------------------------------------------------------------
+# Trailing-window labels track the data, not a hardcoded span
+# ---------------------------------------------------------------------------
+
+def _augment_window(path: Path, *, week_count: int, months: int) -> None:
+    """Add a window table (week_count) and replace results_accrual with N months."""
+    conn = sqlite3.connect(path)
+    conn.execute("CREATE TABLE IF NOT EXISTS results_net_revenue_window (week_count INTEGER)")
+    conn.execute("DELETE FROM results_net_revenue_window")
+    conn.execute("INSERT INTO results_net_revenue_window VALUES (?)", (week_count,))
+    conn.execute("DELETE FROM results_accrual")
+    for i in range(months):
+        conn.execute(
+            "INSERT INTO results_accrual VALUES (?,?,?,?)",
+            (f"2025-{i + 1:02d}", 100000.0, 95000.0, 5000.0),
+        )
+    conn.commit()
+    conn.close()
+
+
+def test_net_revenue_week_label_tracks_window_table(full_results_db):
+    _augment_window(full_results_db, week_count=40, months=8)
+    wb = load_workbook(BytesIO(generate_workbook(full_results_db)))
+    text = _sheet_text(wb, "Net Revenue Ranking")
+    assert "Trailing 40 Weeks" in text
+    assert "52 weeks" not in text.lower()  # retired hardcode must not resurface
+
+
+def test_net_revenue_week_label_omitted_when_window_table_absent(full_results_db):
+    # full_results_db has no results_net_revenue_window table.
+    wb = load_workbook(BytesIO(generate_workbook(full_results_db)))
+    text = _sheet_text(wb, "Net Revenue Ranking")
+    assert "Trailing Window" in text
+    assert "weeks" not in text.lower()
+
+
+def test_accrual_month_label_tracks_row_count(full_results_db):
+    # Fixture ships exactly one accrual month — label must say 1, never 12.
+    wb = load_workbook(BytesIO(generate_workbook(full_results_db)))
+    text = _sheet_text(wb, "Accrual Reconciliation")
+    assert "Trailing 1 Months" in text
+    assert "trailing-1-month" in text
+    assert "12 Months" not in text and "12-month" not in text
+
+
+def test_summary_month_label_tracks_row_count(full_results_db):
+    _augment_window(full_results_db, week_count=40, months=8)
+    wb = load_workbook(BytesIO(generate_workbook(full_results_db)))
+    text = _sheet_text(wb, TAB_NAMES[0])  # Summary tab
+    assert "trailing-8-month" in text
+    assert "12-month" not in text
+
+
+def test_window_readers_track_canonical_results_db():
+    # Integration against the committed baked data.
+    assert read_trailing_weeks(CANON_DB) == 52
+    assert read_trailing_months(CANON_DB) == 12
+
+
+def test_window_readers_return_none_when_db_missing(tmp_path):
+    missing = tmp_path / "nope.db"
+    assert read_trailing_weeks(missing) is None
+    assert read_trailing_months(missing) is None
