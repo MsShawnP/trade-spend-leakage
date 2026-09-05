@@ -18,6 +18,21 @@ app = Dash(
     assets_folder=str(_ROOT / "assets"),
     suppress_callback_exceptions=True,
     title="Trade Spend Leakage",
+    meta_tags=[
+        {"name": "description", "content": "Forensic detection of double-funded promotions, phantom promos, and rate discrepancies. Retailers reranked by net revenue."},
+        {"property": "og:title", "content": "Trade Spend Leakage"},
+        {"property": "og:description", "content": "Forensic detection of double-funded promotions, phantom promos, and rate discrepancies. Retailers reranked by net revenue."},
+        {"property": "og:type", "content": "website"},
+        {"property": "og:url", "content": "https://trade-spend.lailarallc.com/"},
+        {"property": "og:image", "content": "https://lailarallc.com/og/s/trade-spend.png"},
+        {"property": "og:image:secure_url", "content": "https://lailarallc.com/og/s/trade-spend.png"},
+        {"property": "og:image:type", "content": "image/png"},
+        {"property": "og:image:width", "content": "1200"},
+        {"property": "og:image:height", "content": "630"},
+        {"property": "og:image:alt", "content": "Trade Spend Leakage"},
+        {"name": "twitter:card", "content": "summary_large_image"},
+        {"name": "twitter:image", "content": "https://lailarallc.com/og/s/trade-spend.png"},
+    ],
 )
 server = app.server
 
